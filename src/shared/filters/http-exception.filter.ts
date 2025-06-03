@@ -6,7 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { get } from 'lodash';
+import { get, toInteger, toString } from 'lodash';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -24,22 +24,34 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const res = exception.getResponse();
       status = exception.getStatus();
 
-      if (typeof res === 'string') {
+      if (
+        typeof res === 'object' &&
+        res !== null &&
+        'errorCode' in res &&
+        'errorMessage' in res
+      ) {
+        // เป็น AppException ที่เราสร้างเอง
+        errorCode = toInteger(res.errorCode);
+        errorMessage = toString(res.errorMessage);
+        errors = get(res, 'errors') ?? [];
+      } else if (
+        typeof res === 'object' &&
+        'message' in res &&
+        Array.isArray(res.message)
+      ) {
+        // ⚠️ ValidationPipe error format
+        status = HttpStatus.BAD_REQUEST;
+        errorCode = 100422;
+        errorMessage = 'VALIDATE_ERROR';
+        errors = res.message;
+      } else if (typeof res === 'string') {
         errorMessage = res;
-      } else if (typeof res === 'object' && res !== null) {
-        if ('message' in res && Array.isArray(res.message)) {
-          // ⚠️ ValidationPipe error format
-          errorCode = 100422;
-          errorMessage = 'VALIDATE_ERROR';
-          errors = res.message;
-        } else {
-          errorMessage =
-            get(res, 'error') ?? get(res, 'message') ?? 'HTTP_EXCEPTION_ERROR';
-
-          const message = get(res, 'message');
-          if (typeof message === 'string') {
-            errors = [message];
-          }
+      } else {
+        errorMessage =
+          get(res, 'error') ?? get(res, 'message') ?? 'HTTP_EXCEPTION_ERROR';
+        const message = get(res, 'message');
+        if (typeof message === 'string') {
+          errors = [message];
         }
       }
     } else if (exception instanceof Error) {
