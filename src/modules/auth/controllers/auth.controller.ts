@@ -35,6 +35,7 @@ export class AuthController {
     return this.authService.refresh(refreshTokenDto.refreshToken);
   }
 
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@CurrentUser() user: UserEntity) {
