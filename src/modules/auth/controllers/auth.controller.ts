@@ -7,9 +7,15 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '#shared/decorators/current-user.decorator';
 import { UserEntity } from '#modules/user/entities/user.entity';
 import { UserResponseDto } from '../dtos/responses/user-response.dto';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { loginResponse } from '../swagger/login.response';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

@@ -2,6 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../entities/user.entity';
+import { paginate, Pagination } from 'nestjs-typeorm-paginate';
+import { PaginatedRequestInterface } from '#common/interfaces/paginated-request.interface';
+import { DEFAULT_PAGINATION } from '#shared/constants/pagination.constant';
+
+export interface FindUserOptions extends PaginatedRequestInterface {
+  email?: string;
+  mobile?: string;
+  isActive?: boolean;
+  fullName?: string;
+}
 
 @Injectable()
 export class UserRepository {
@@ -21,5 +31,37 @@ export class UserRepository {
   async create(userData: Partial<UserEntity>): Promise<UserEntity> {
     const user = this.repo.create(userData);
     return this.repo.save(user);
+  }
+
+  async findAll(query: FindUserOptions): Promise<Pagination<UserEntity>> {
+    const queryBuilder = this.repo.createQueryBuilder('user');
+
+    if (query.email) {
+      queryBuilder.andWhere('user.email = :email', { email: query.email });
+    }
+
+    if (query.mobile) {
+      queryBuilder.andWhere('user.mobile = :mobile', { mobile: query.mobile });
+    }
+
+    if (query.isActive !== undefined) {
+      queryBuilder.andWhere('user.isActive = :isActive', {
+        isActive: query.isActive,
+      });
+    }
+
+    if (query.fullName) {
+      queryBuilder.andWhere('LOWER(user.fullName) LIKE :fullName', {
+        fullName: `%${query.fullName.toLocaleLowerCase()}%`,
+      });
+    }
+
+    const page = query.page ?? DEFAULT_PAGINATION.PAGE;
+    const limit = query.perPage ?? DEFAULT_PAGINATION.LIMIT;
+
+    return await paginate<UserEntity>(queryBuilder, {
+      page,
+      limit,
+    });
   }
 }

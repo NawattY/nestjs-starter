@@ -1,16 +1,20 @@
 export interface PaginatedResultInterface<T> {
   items: T[];
-  meta: {
-    totalItems: number;
-    itemCount: number;
-    itemsPerPage: number;
-    totalPages: number;
-    currentPage: number;
-  };
-  links?: {
-    first?: string;
-    previous?: string;
-    next?: string;
-    last?: string;
-  };
+  meta: PaginatedResultMetaInterface;
+  links?: PaginatedResultLinkInterface;
+}
+
+export interface PaginatedResultMetaInterface {
+  totalItems: number;
+  itemCount: number;
+  itemsPerPage: number;
+  totalPages: number;
+  currentPage: number;
+}
+
+export interface PaginatedResultLinkInterface {
+  first?: string;
+  previous?: string;
+  next?: string;
+  last?: string;
 }
