@@ -1,4 +1,3 @@
-// src/config/configuration.ts
 export const configuration = () => ({
   env: process.env.NODE_ENV ?? 'development',
   projectName: process.env.PROJECT_NAME ?? 'nestjs-app',
