@@ -7,11 +7,18 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '#shared/decorators/current-user.decorator';
 import { UserEntity } from '#modules/user/entities/user.entity';
 import { UserResponseDto } from '../dtos/responses/user-response.dto';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { loginResponse } from '../swagger/login.response';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @ApiOperation({
+    summary: 'Auth login',
+    description: 'Login to the system',
+  })
+  @ApiResponse(loginResponse)
   @Post('login')
   login(@Body() loginDto: LoginRequestDto) {
     return this.authService.login(loginDto);
