@@ -1,7 +1,7 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 import { GlobalSerializerInterceptor } from './shared/interceptors/serializer.interceptor';
 
@@ -24,6 +24,15 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(
     new GlobalSerializerInterceptor(app.get(Reflector)),
+  );
+
+  // ✅ เปิด ValidationPipe แบบ global
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // ตัด field ที่ไม่อยู่ใน DTO
+      forbidNonWhitelisted: true, // ถ้ามี field เกินมา → throw error
+      transform: true, // แปลง primitive (เช่น string → number) ตาม type ของ DTO
+    }),
   );
 
   // ✅ Start App

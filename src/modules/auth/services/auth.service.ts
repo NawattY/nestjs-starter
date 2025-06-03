@@ -1,36 +1,42 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
-import { UserService } from 'src/modules/user/services/user.service';
+import { UserService } from '../../user/services/user.service';
 import { LoginDto } from '../dtos/login.dto';
-import { AuthResponseDto } from '../dtos/auth-response.dto';
-import { UserAuthException } from '../exceptions/user-auth.exception';
+import * as bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly userService: UserService,
   ) {}
 
-  async login(params: LoginDto): Promise<AuthResponseDto> {
-    const user = await this.userService.findByUsername(params.username);
-    if (!user) {
-      throw UserAuthException.userNotFound();
+  async login(dto: LoginDto) {
+    const user = await this.userService.findByUsername(dto.username);
+    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      params.password,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      throw UserAuthException.credentialMismatch();
-    }
+    const payload = { sub: user.id };
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = uuidv4(); // Replace with actual save logic
 
-    const token = this.jwtService.sign({ sub: user.id });
     return {
-      accessToken: token,
+      accessToken,
+      refreshToken,
       userId: user.id,
     };
+  }
+
+  refresh(refreshToken: string) {
+    // TODO: lookup token, validate expiry
+    if (!refreshToken) throw new UnauthorizedException('Invalid refresh token');
+
+    // For now, just generate new access token
+    const userId = 'example-user-id'; // Replace with DB lookup
+    const accessToken = this.jwtService.sign({ sub: userId });
+
+    return { accessToken };
   }
 }

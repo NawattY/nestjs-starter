@@ -2,14 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { UserService } from '../../user/services/user.service';
 import { TokenPayload } from '../interfaces/token-payload.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly userService: UserService,
+  ) {
     const jwtSecret = configService.get<string>('auth.jwtSecret');
     if (!jwtSecret) {
-      throw new Error('JWT secret is not defined in configuration');
+      throw new Error('JWT_SECRET is not defined in configuration');
     }
 
     super({
@@ -19,7 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: TokenPayload) {
-    return { userId: payload.sub };
+  async validate(payload: TokenPayload) {
+    return this.userService.findById(payload.sub);
   }
 }
