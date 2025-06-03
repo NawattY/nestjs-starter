@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -16,7 +17,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         database: config.get<string>('database.database'),
         autoLoadEntities: true,
         synchronize: false,
+        debug: config.get<boolean>('database.debug'),
         logging: config.get<boolean>('database.enableQueryLog'),
+        bigNumberStrings: false,
+        useUTC: true,
       }),
     }),
   ],

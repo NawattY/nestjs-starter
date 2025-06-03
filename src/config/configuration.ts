@@ -17,4 +17,11 @@ export const configuration = () => ({
     debug: process.env.DB_DEBUG === 'true',
     enableQueryLog: process.env.DB_ENABLE_QUERY_LOG === 'true',
   },
+
+  auth: {
+    jwtSecret: process.env.JWT_SECRET,
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN,
+    jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
+    jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+  },
 });
