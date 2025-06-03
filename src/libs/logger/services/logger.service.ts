@@ -1,24 +1,37 @@
-import { Injectable, LoggerService as NestLoggerService } from '@nestjs/common';
+import { Injectable, LoggerService as NestLogger } from '@nestjs/common';
+import { GraylogService } from './graylog.service';
+import { CloudWatchLoggerService } from './cloudwatch.service';
 
 @Injectable()
-export class LoggerService implements NestLoggerService {
-  log(message: any, context?: string): any {
-    console.log(`[LOG] ${context ?? ''}`, message);
+export class LoggerService implements NestLogger {
+  constructor(
+    private readonly graylogService: GraylogService,
+    private readonly cloudwatchService: CloudWatchLoggerService,
+  ) {}
+
+  log(message: any, context?: string) {
+    console.log(message);
+    this.graylogService.log(message, { context });
+    this.cloudwatchService.log(`[LOG] ${message}`);
   }
 
-  error(message: any, trace?: string, context?: string): any {
-    console.error(`[ERROR] ${context ?? ''}`, message, trace);
+  error(message: any, trace?: string, context?: string) {
+    console.error(message);
+    this.graylogService.error(message, { trace, context });
+    this.cloudwatchService.log(`[ERROR] ${message}`);
   }
 
-  warn(message: any, context?: string): any {
-    console.warn(`[WARN] ${context ?? ''}`, message);
+  warn(message: any, context?: string) {
+    console.warn(message);
+    this.graylogService.warn(message, { context });
+    this.cloudwatchService.log(`[WARN] ${message}`);
   }
 
-  debug?(message: any, context?: string): any {
-    console.debug(`[DEBUG] ${context ?? ''}`, message);
+  debug(message: any, context?: string) {
+    this.cloudwatchService.log(`[DEBUG] ${message}`);
   }
 
-  verbose?(message: any, context?: string): any {
-    console.info(`[VERBOSE] ${context ?? ''}`, message);
+  verbose(message: any, context?: string) {
+    this.cloudwatchService.log(`[VERBOSE] ${message}`);
   }
 }
