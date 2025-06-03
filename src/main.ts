@@ -1,9 +1,10 @@
 import { NestFactory, Reflector } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { Logger, ValidationPipe } from '@nestjs/common';
-import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
-import { GlobalSerializerInterceptor } from './shared/interceptors/serializer.interceptor';
+import { AppModule } from '#app.module';
+import { HttpExceptionFilter } from '#shared/filters/http-exception.filter';
+import { GlobalSerializerInterceptor } from '#shared/interceptors/global-serializer.interceptor';
+import { setupSwagger } from '#shared/swagger/swagger.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -34,6 +35,8 @@ async function bootstrap() {
       transform: true, // แปลง primitive (เช่น string → number) ตาม type ของ DTO
     }),
   );
+
+  setupSwagger(app);
 
   // ✅ Start App
   await app.listen(port, host);

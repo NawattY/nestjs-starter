@@ -1,6 +1,6 @@
-import { UserEntity } from '../../modules/user/entities/user.entity';
+import ormConfig from '#database/orm.config';
+import { UserEntity } from '#modules/user/entities/user.entity';
 import * as bcrypt from 'bcryptjs';
-import ormConfig from '../orm.config';
 
 async function seed() {
   const dataSource = await ormConfig.initialize();
