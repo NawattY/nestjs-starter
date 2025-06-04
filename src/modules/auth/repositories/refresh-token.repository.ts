@@ -10,7 +10,10 @@ export class RefreshTokenRepository {
     private readonly repo: Repository<RefreshTokenEntity>,
   ) {}
 
-  async createToken(userId: string, token: string): Promise<RefreshTokenEntity> {
+  async createToken(
+    userId: string,
+    token: string,
+  ): Promise<RefreshTokenEntity> {
     const entity = this.repo.create({ userId, token });
     return this.repo.save(entity);
   }
