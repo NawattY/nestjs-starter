@@ -17,18 +17,20 @@ import { ConfigType } from '@nestjs/config';
     PassportModule,
     TypeOrmModule.forFeature([RefreshTokenEntity]),
     JwtModule.registerAsync({
-      imports: [],
-      useFactory: (authConfig: ConfigType<typeof authConfiguration>) => ({
-        secret: authConfig.jwtSecret,
-        signOptions: {
-          expiresIn: authConfig.jwtExpiresIn,
-        },
-      }),
-      inject: [],
+      useFactory: (authConfig: ConfigType<typeof authConfiguration>) => {
+        return {
+          secret: authConfig.jwtSecret,
+          signOptions: {
+            expiresIn: authConfig.jwtExpiresIn,
+          },
+        };
+      },
+      inject: [authConfiguration.KEY], // 3. **สำคัญมาก:** ต้อง inject authConfiguration.KEY ที่นี่
     }),
     UserModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtAuthGuard, RefreshTokenRepository],
+  // exports: [AuthService, JwtAuthGuard], // (Optional) ถ้า Module อื่นต้องการใช้ AuthService หรือ Guard
 })
 export class AuthModule {}

@@ -64,8 +64,6 @@ export const databaseConfiguration = registerAs(
       DB_ENABLE_QUERY_LOG: process.env.DB_ENABLE_QUERY_LOG,
     };
 
-    console.log(rawConfig);
-
     // 2. เรียกใช้ Utility Function กลางในการ Validate และ Transform
     const validatedEnv = validateAndTransformConfig(
       EnvironmentVariables, // Class ที่ใช้ Validate
