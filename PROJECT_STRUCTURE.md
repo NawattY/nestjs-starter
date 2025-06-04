@@ -1,141 +1,129 @@
-src/
-├── app.module.ts
-├── main.ts
-├── common/                    # NestJS Framework Components
-│   ├── decorators/            # Custom decorators
-│   │   ├── roles.decorator.ts
-│   │   └── current-user.decorator.ts
-│   ├── filters/               # Exception filters
-│   │   ├── http-exception.filter.ts
-│   │   └── validation-exception.filter.ts
-│   ├── guards/                # Guards
-│   │   ├── jwt-auth.guard.ts
-│   │   └── roles.guard.ts
-│   ├── interceptors/          # Interceptors
-│   │   ├── logging.interceptor.ts
-│   │   └── transform.interceptor.ts
-│   ├── pipes/                 # Validation pipes
-│   │   ├── validation.pipe.ts
-│   │   └── parse-int.pipe.ts
-│   ├── dto/                   # Base DTOs
-│   │   ├── pagination.dto.ts
-│   │   └── base-response.dto.ts
-│   └── middleware/            # Custom middleware
-│       └── logger.middleware.ts
-├── shared/                    # Business Utilities
-│   ├── services/              # Shared business services
-│   │   ├── email.service.ts
-│   │   ├── file-upload.service.ts
-│   │   └── notification.service.ts
-│   ├── interfaces/            # TypeScript interfaces
-│   │   ├── api-response.interface.ts
-│   │   ├── pagination.interface.ts
-│   │   └── user.interface.ts
-│   ├── constants/             # Application constants
-│   │   ├── app.constants.ts
-│   │   ├── error-messages.ts
-│   │   └── status-codes.ts
-│   ├── utils/                 # Helper functions
-│   │   ├── date.util.ts
-│   │   ├── string.util.ts
-│   │   └── validation.util.ts
-│   ├── enums/                 # Enums
-│   │   ├── user-status.enum.ts
-│   │   └── order-status.enum.ts
-│   └── types/                 # Type definitions
-│       ├── api.types.ts
-│       └── common.types.ts
-├── core/                      # Core System Components (Modular)
-│   ├── base/                  # Required Base Components
-│   │   ├── database/
-│   │   │   ├── database.module.ts
-│   │   │   ├── base.entity.ts
-│   │   │   ├── migrations/
-│   │   │   │   └── .gitkeep
-│   │   │   └── database.providers.ts
-│   │   ├── config/
-│   │   │   └── config.module.ts
-│   │   └── health/
-│   │       ├── health.module.ts
-│   │       └── health.controller.ts
-│   ├── auth/                  # Optional - Authentication System
-│   │   ├── auth.module.ts
-│   │   ├── auth.service.ts
-│   │   ├── jwt.strategy.ts
-│   │   ├── local.strategy.ts
-│   │   ├── migrations/
-│   │   │   ├── 001-create-sessions-table.ts
-│   │   │   └── .gitkeep
-│   │   ├── seeds/
-│   │   │   └── .gitkeep
-│   │   └── interfaces/
-│   │       └── auth.interface.ts
-│   ├── user-management/       # Optional - User Management
-│   │   ├── user.module.ts
-│   │   ├── user.service.ts
-│   │   ├── entities/
-│   │   │   ├── user.entity.ts
-│   │   │   ├── role.entity.ts
-│   │   │   └── permission.entity.ts
-│   │   ├── migrations/
-│   │   │   ├── 001-create-users-table.ts
-│   │   │   ├── 002-create-roles-table.ts
-│   │   │   └── 003-create-permissions-table.ts
-│   │   └── seeds/
-│   │       ├── 001-default-roles.seed.ts
-│   │       └── 002-admin-user.seed.ts
-│   ├── cache/                 # Optional - Cache System
-│   │   ├── cache.module.ts
-│   │   └── cache.service.ts
-│   ├── queue/                 # Optional - Job Queue
-│   │   ├── queue.module.ts
-│   │   └── queue.service.ts
-│   ├── file-upload/           # Optional - File Upload
-│   │   ├── upload.module.ts
-│   │   ├── upload.service.ts
-│   │   └── storage/
-│   │       └── .gitkeep
-│   ├── logging/               # Optional - Advanced Logging
-│   │   ├── logger.module.ts
-│   │   └── logger.service.ts
-│   └── index.ts               # Core exports
-├── config/                    # Configuration Management
-│   ├── configuration.ts       # Main config loader
-│   ├── interfaces/
-│   │   └── config.interface.ts
-│   ├── envs/                  # Environment-specific configs
-│   │   ├── development.ts
-│   │   ├── production.ts
-│   │   └── test.ts
-│   ├── database.config.ts     # Database configurations
-│   ├── jwt.config.ts          # JWT configurations
-│   ├── cache.config.ts        # Cache configurations
-│   ├── upload.config.ts       # File upload configurations
-│   ├── features.config.ts     # Feature flags
-│   └── validation.schema.ts   # Joi validation schema
-├── database/                  # Project-Specific Database
-│   ├── migrations/            # Business migrations
-│   │   └── .gitkeep
-│   └── seeds/                 # Business seeds
-│       └── .gitkeep
-├── modules/                   # Business Modules (Project-Specific)
-│   └── .gitkeep               # Keep folder for boilerplate
-├── examples/                  # Example Implementations
-│   ├── crud/
-│   │   ├── example.controller.ts
-│   │   ├── example.service.ts
-│   │   ├── example.module.ts
-│   │   ├── dto/
-│   │   │   ├── create-example.dto.ts
-│   │   │   └── update-example.dto.ts
-│   │   └── entities/
-│   │       └── example.entity.ts
-│   ├── auth-usage/
-│   │   └── protected.controller.ts
-│   ├── file-upload/
-│   │   └── upload.controller.ts
-│   └── README.md
-└── scripts/                   # Project Scripts
-    ├── seed.ts
-    ├── migration.ts
-    └── setup-project.sh
+.
+├── .env.example                    # ตัวอย่างไฟล์ Environment Variables
+├── .eslintignore
+├── .eslintrc.js                    # ESLint Configuration
+├── .gitignore
+├── .prettierignore
+├── .prettierrc.js                  # Prettier Configuration
+├── docker-compose.yml              # (Optional) สำหรับ Docker
+├── Dockerfile                      # (Optional) สำหรับ Docker
+├── nest-cli.json
+├── package.json
+├── README.md
+├── tsconfig.build.json
+├── tsconfig.json
+│
+├── src/
+│   ├── main.ts                     # ไฟล์เริ่มต้นสำหรับ bootstrap แอปพลิเคชัน
+│   ├── app.module.ts               # โมดูลหลักของแอปพลิเคชัน
+│   │
+│   ├── core/                       # Boilerplate's Core: กลไกพื้นฐาน, ไม่ควรเปลี่ยนบ่อยเมื่อเริ่มโปรเจกต์ใหม่
+│   │   ├── config/                 #   - กลไกการจัดการ Configuration
+│   │   │   ├── config.module.ts    #     - CoreConfigModule (setup @nestjs/config, load .env, load project configs from src/config/)
+│   │   │   ├── config.service.ts   #     - CoreConfigService (wrapper service สำหรับเข้าถึง config)
+│   │   │   ├── validation.ts       #     - (Joi) Schema สำหรับ validate ENV vars พื้นฐานที่ Boilerplate คาดหวัง
+│   │   │   └── utils/
+│   │   │       └── validate-config.util.ts # - Utility function กลางสำหรับ validate project-specific typed configs
+│   │   │
+│   │   ├── database/               #   - กลไกการเชื่อมต่อฐานข้อมูลของ NestJS
+│   │   │   └── database.module.ts  #     - CoreDatabaseModule (e.g., TypeOrmModule.forRootAsync() โดยใช้ DataSource จาก src/database/data-source.ts)
+│   │   │
+│   │   ├── logger/                 # ระบบ Logging ส่วนกลาง
+│   │   │   ├── logger.module.ts    #   - โมดูลสำหรับให้บริการ LoggerService
+│   │   │   ├── logger.module.ts    #   - เซอร์วิสสำหรับการ Log (อาจจะ wrap Winston หรือ NestJS Logger)
+│   │   │   ├── logger.interface.ts #   - (Optional) Interface สำหรับ Logger (ถ้ามีการ implement เอง)
+│   │   │   └── index.ts            #   - (Optional) Export ทุกอย่างจาก logger/
+│   │   │
+│   │   ├── caching/                # (ตัวอย่าง) กลไก Caching
+│   │   │   ├── caching.module.ts   #   - โมดูลสำหรับตั้งค่าและให้บริการ Caching
+│   │   │   ├── caching.service.ts  #   - เซอร์วิสสำหรับจัดการ Cache
+│   │   │   └── index.ts            #   - (Optional) Export ทุกอย่างจาก caching/
+│   │   │
+│   │   ├── mailing/                # (ตัวอย่าง) กลไกการส่ง Email
+│   │   │   ├── mailing.module.ts   #   - โมดูลสำหรับตั้งค่าและให้บริการ Mailing
+│   │   │   ├── mailing.service.ts  #   - เซอร์วิสสำหรับส่งอีเมล
+│   │   │   ├── templates/          #   - (Optional) โฟลเดอร์สำหรับเก็บ Email Templates
+│   │   │       └── welcome.hbs     #     (ตัวอย่าง template)
+│   │   │   └── index.ts            #   - (Optional) Export ทุกอย่างจาก mailing/
+│   │   │
+│   │   └── index.ts                #   - (Optional) ไฟล์หลักสำหรับ re-export โมดูลทั้งหมดจาก core/ เพื่อให้ AppModule สามารถ import โมดูลจาก core/ ได้ง่ายขึ้น เช่น import { ConfigModule, DatabaseModule, LoggerModule } from '#core'; (จะต้องตั้งค่า path alias '#' ใน tsconfig.json ด้วย)
+│   │
+│   ├── database/                   # Project-Specific DB: Schema, Migrations, Seeds & ORM Config โดยตรง
+│   │   ├── data-source.ts          #   - ไฟล์ Config หลักสำหรับ ORM CLI (e.g., TypeORM DataSource)
+│   │   │                           #     (จะ config path ไปยัง entities ใน feature modules และ migrations ที่นี่)
+│   │   ├── migrations/             #   - โฟลเดอร์สำหรับ Database Migrations (ไฟล์ .ts)
+│   │   │   └── .gitkeep            #     (Boilerplate อาจจะว่าง หรือมีตัวอย่าง migration แรก)
+│   │   └── seeds/                  #   - โฟลเดอร์สำหรับ Database Seeds (ไฟล์ .ts หรือตาม library ที่ใช้)
+│   │       └── .gitkeep            #     (ถ้าใช้ SeedModule อาจจะเก็บแค่ raw data หรือไม่ใช้เลย)
+│   │                               #   *Entities: โดยทั่วไปจะอยู่ในแต่ละ Feature Module (e.g., src/modules/users/entities/user.entity.ts)
+│   │                               #    และ data-source.ts จะถูกตั้งค่าให้ค้นหา entities จาก path เหล่านั้น (e.g., 'src/modules/**/*.entity.ts')
+│   │
+│   ├── config/                     # Project-Specific Typed Configurations: โครงสร้าง Config ที่ซับซ้อนของโปรเจกต์นี้
+│   │   ├── app.config.ts           #   - (ตัวอย่าง) ใช้ registerAs และ validateAndTransformConfig จาก core
+│   │   ├── jwt.config.ts           #   - (ตัวอย่าง)
+│   │   ├── database.config.ts      #   - (ตัวอย่าง) Typed config สำหรับ database connection details (ถ้าจำเป็น)
+│   │   ├── swagger.config.ts       #   - API documentation config
+│   │   └── index.ts                #   - Export array ของ configuration factories ทั้งหมดเพื่อให้ CoreConfigModule โหลด
+│   │
+│   ├── constants/                  # Project-Specific Global Constants: ค่าคงที่ที่ใช้หลายส่วนใน "โปรเจกต์นี้"
+│   │   ├── index.ts
+│   │   └── error-codes.constants.ts #  - (ตัวอย่าง)
+│   │
+│   ├── shared/                     # Boilerplate's Shared Components: Utilities, DTOs พื้นฐาน ที่ใช้ซ้ำได้ทั่วไปใน Boilerplate
+│   │   ├── constants/              #   - ค่าคงที่ที่เป็นสากลมากๆ ของ Boilerplate (ควรมีน้อย)
+│   │   ├── decorators/             #   - Custom decorators ทั่วไป
+│   │   ├── dto/                    #   - Base DTOs (e.g., PaginationDto, SuccessResponseDto)
+│   │   ├── exceptions/             #   - Base custom exceptions
+│   │   ├── filters/                #   - Global Exception Filters (e.g., GlobalExceptionsFilter)
+│   │   ├── guards/                 #   - Global Guards หรือ Guards ที่ใช้ได้ทั่วไปมากๆ (ถ้ามี)
+│   │   ├── helpers/                #   - (หรือ utils/) Utility functions ทั่วไป
+│   │   ├── interfaces/             #   - TypeScript interfaces ที่ใช้ได้ทั่วไป
+│   │   ├── interceptors/           #   - Global Interceptors (e.g., TransformResponseInterceptor)
+│   │   ├── pipes/                  #   - Global Pipes (e.g., setup for ValidationPipe)
+│   │   └── providers/              #   - Shared utility services (ถ้ามี)
+│   │
+│   └── modules/                    # (หรือ features/) Feature Modules: ส่วน Business Logic หลักของแอปพลิเคชัน
+│       ├── auth/                   #   - (ตัวอย่าง) โมดูลการยืนยันตัวตนและสิทธิ์
+│       │   ├── auth.module.ts
+│       │   ├── auth.controller.ts
+│       │   ├── auth.service.ts
+│       │   ├── strategies/         #     - Passport strategies
+│       │   ├── guards/             #     - Feature-specific guards
+│       │   ├── decorators/         #     - Auth-specific decorators
+│       │   ├── dto/
+│       │   ├── constants/          #     - Auth-specific constants
+│       │   └── entities/           #     - (Optional, e.g., RefreshTokenEntity, ถ้า UserEntity อยู่อีก Module)
+│       │
+│       ├── users/                  #   - (ตัวอย่าง) โมดูลจัดการผู้ใช้งาน
+│       │   ├── users.module.ts
+│       │   ├── users.controller.ts
+│       │   ├── users.service.ts
+│       │   ├── dto/
+│       │   ├── entities/           #     - User.entity.ts
+│       │   ├── repositories/       #     - (Optional) User.repository.ts
+│       │   └── constants/
+│       │
+│       ├── health/                 #   - (Recommended) โมดูลสำหรับ Health Check
+│       │   ├── health.module.ts
+│       │   └── health.controller.ts
+│       │
+│       ├── seed/                   #   - (Optional) โมดูลสำหรับจัดการ Database Seeding ที่ซับซ้อนด้วย NestJS Services
+│       │   ├── seed.module.ts      #     (เป็นทางเลือก/ส่วนเสริมของ src/database/seeds/)
+│       │   ├── seed.service.ts
+│       │   └── seeders/            #     - (Optional) โฟลเดอร์เก็บ seeder logic ย่อยๆ
+│       │
+│       └── [other-feature-module]/ #   - โครงสร้างสำหรับ Feature Module อื่นๆ
+│           ├── [feature].module.ts
+│           ├── [feature].controller.ts
+│           ├── [feature].service.ts
+│           ├── dto/
+│           ├── entities/
+│           ├── constants/
+│           └── ...
+│
+└── test/                           # ไฟล์สำหรับ Unit Tests และ E2E Tests
+    ├── jest-e2e.json
+    ├── jest.config.js              # (หรือ vitest.config.ts ถ้าใช้ Vitest)
+    ├── unit/                       # (Optional) โฟลเดอร์สำหรับ Unit Tests แยกตามโครงสร้าง src
+    └── e2e/                        # (Optional) โฟลเดอร์สำหรับ E2E Tests
+        └── app.e2e-spec.ts
