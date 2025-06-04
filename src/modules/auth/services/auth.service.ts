@@ -5,23 +5,26 @@ import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { LoginRequestDto } from '../dtos/requests/login-request.dto';
 import { UserAuthException } from '../exceptions/user-auth.exception';
+import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
+    private readonly refreshTokenRepo: RefreshTokenRepository,
   ) {}
 
   async login(dto: LoginRequestDto) {
     const user = await this.userService.findByUsername(dto.username);
     if (!user || !(await bcrypt.compare(dto.password, user.password))) {
-      return UserAuthException.credentialMismatch();
+      UserAuthException.credentialMismatch();
     }
 
     const payload = { sub: user.id };
     const accessToken = this.jwtService.sign(payload);
-    const refreshToken = uuidv4(); // Replace with actual save logic
+    const refreshToken = uuidv4();
+    await this.refreshTokenRepo.createToken(user.id, refreshToken);
 
     return {
       accessToken,
@@ -30,13 +33,22 @@ export class AuthService {
     };
   }
 
-  refresh(refreshToken: string) {
-    // TODO: lookup token, validate expiry
-    if (!refreshToken) throw new UnauthorizedException('Invalid refresh token');
+  async refresh(refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
 
-    // For now, just generate new access token
-    const userId = 'example-user-id'; // Replace with DB lookup
-    const accessToken = this.jwtService.sign({ sub: userId });
+    const token = await this.refreshTokenRepo.findByToken(refreshToken);
+    if (!token) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const user = await this.userService.findById(token.userId);
+    if (!user) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const accessToken = this.jwtService.sign({ sub: user.id });
 
     return { accessToken };
   }
