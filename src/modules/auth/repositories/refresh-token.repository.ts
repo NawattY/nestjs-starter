@@ -21,4 +21,8 @@ export class RefreshTokenRepository {
   async findByToken(token: string): Promise<RefreshTokenEntity | null> {
     return this.repo.findOne({ where: { token } });
   }
+
+  async revokeToken(token: string): Promise<void> {
+    await this.repo.update({ token }, { revokedAt: new Date() });
+  }
 }

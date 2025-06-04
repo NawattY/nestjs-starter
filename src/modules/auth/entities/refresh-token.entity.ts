@@ -25,4 +25,7 @@ export class RefreshTokenEntity {
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt: Date;
+
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  revokedAt: Date | null;
 }

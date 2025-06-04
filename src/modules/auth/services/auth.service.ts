@@ -39,7 +39,7 @@ export class AuthService {
     }
 
     const token = await this.refreshTokenRepo.findByToken(refreshToken);
-    if (!token) {
+    if (!token || token.revokedAt) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
@@ -51,5 +51,17 @@ export class AuthService {
     const accessToken = this.jwtService.sign({ sub: user.id });
 
     return { accessToken };
+  }
+
+  async revoke(userId: string, refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+    const token = await this.refreshTokenRepo.findByToken(refreshToken);
+    if (!token || token.revokedAt || token.userId !== userId) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+    await this.refreshTokenRepo.revokeToken(refreshToken);
+    return { success: true };
   }
 }
