@@ -37,6 +37,16 @@ export class AuthController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @Post('revoke')
+  revoke(
+    @Body() refreshTokenDto: RefreshTokenRequestDto,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return this.authService.revoke(user.id, refreshTokenDto.refreshToken);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@CurrentUser() user: UserEntity) {
     console.log('Current User:', user);
