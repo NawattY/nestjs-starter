@@ -28,10 +28,10 @@ The project structure is designed to be modular, scalable, and maintainable.
 .
 ├── .env.example                    # ตัวอย่างไฟล์ Environment Variables
 ├── .eslintignore
-├── .eslintrc.js                    # ESLint Configuration
 ├── .gitignore
 ├── .prettierignore
-├── .prettierrc.js                  # Prettier Configuration
+├── .prettierrc                     # Prettier Configuration
+├── eslint.config.mjs               # ESLint Configuration
 ├── docker-compose.yml              # (Optional) สำหรับ Docker
 ├── Dockerfile                      # (Optional) สำหรับ Docker
 ├── nest-cli.json
