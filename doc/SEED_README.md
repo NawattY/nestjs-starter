@@ -24,7 +24,7 @@
 
 ```ts
 import { DataSource } from 'typeorm';
-import { UserEntity } from ' #modules/user/entities/user.entity';
+import { UserEntity } from '#modules/user/entities/user.entity';
 import { hash } from 'bcryptjs';
 import ormConfig from '#database/data-source';
 

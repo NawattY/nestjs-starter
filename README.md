@@ -1,4 +1,4 @@
-# [Project Title] - NestJS Boilerplate
+# NestJS Starter
 
 A robust and scalable NestJS boilerplate designed to kickstart your backend development. This boilerplate includes pre-configured modules for common tasks, a well-defined project structure, and best practices for building enterprise-grade applications.
 
@@ -57,7 +57,7 @@ The project structure is designed to be modular, scalable, and maintainable.
 │   │   │
 │   │   ├── logger/                 # ระบบ Logging ส่วนกลาง
 │   │   │   ├── logger.module.ts    #   - โมดูลสำหรับให้บริการ LoggerService
-│   │   │   ├── logger.module.ts    #   - เซอร์วิสสำหรับการ Log (อาจจะ wrap Winston หรือ NestJS Logger)
+│   │   │   ├── logger.service.ts   #   - เซอร์วิสสำหรับการ Log (อาจจะ wrap Winston หรือ NestJS Logger)
 │   │   │   ├── logger.interface.ts #   - (Optional) Interface สำหรับ Logger (ถ้ามีการ implement เอง)
 │   │   │   └── index.ts            #   - (Optional) Export ทุกอย่างจาก logger/
 │   │   │
@@ -195,7 +195,7 @@ The project structure is designed to be modular, scalable, and maintainable.
     ```
 2.  Open the `.env` file and update the environment variables according to your setup (database credentials, JWT secrets, API keys, etc.). The required and optional variables are typically defined and validated via `src/core/config/validation.ts` and specific `src/config/*.config.ts` files.
 
-## ධ Running the Application
+## 🚀 Running the Application
 
 * **Development Mode (with hot-reloading):**
     ```bash
@@ -313,6 +313,6 @@ This boilerplate includes a `Dockerfile` and `docker-compose.yml` for containeri
 
 ## 📜 License
 
-This project is licensed under the [MIT License](LICENSE). ---
+This project is licensed under the [MIT License](LICENSE).
 
-*This README provides a comprehensive guide to the boilerplate. Remember to replace placeholders like `[Project Title]`, `your-username/your-repo`, and update specific examples to match your final implementation.*
+*This README provides a comprehensive guide to the boilerplate. Remember to replace placeholders like `your-username/your-repo`, and update specific examples to match your final implementation.*
