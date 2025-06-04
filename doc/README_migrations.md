@@ -45,11 +45,11 @@ npm run migration:list
 ### 🛠 Scripts ที่ตั้งไว้ใน package.json
 ```json
 "scripts": {
-  "typeorm": "typeorm-ts-node-commonjs",
-  "migration:generate": "typeorm-ts-node-commonjs migration:generate -d ./src/database/orm.config.ts src/database/migrations/$npm_config_name",
-  "migration:create": "typeorm-ts-node-commonjs migration:create -d ./src/database/orm.config.ts src/database/migrations/$npm_config_name",
-  "migration:run": "typeorm-ts-node-commonjs migration:run -d ./src/database/orm.config.ts",
-  "migration:revert": "typeorm-ts-node-commonjs migration:revert -d ./src/database/orm.config.ts",
-  "migration:list": "typeorm-ts-node-commonjs migration:show -d ./src/database/orm.config.ts"
+  "migration:generate": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d ./src/database/data-source.ts src/database/migrations/$npm_config_name",
+  "migration:create": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:create -d ./src/database/data-source.ts src/database/migrations/$npm_config_name",
+  "migration:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d ./src/database/data-source.ts",
+  "migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d ./src/database/data-source.ts",
+  "migration:list": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:show -d ./src/database/data-source.ts",
+  "seed": "ts-node -r tsconfig-paths/register src/database/seeders/$npm_config_file"
 }
 ```

@@ -68,7 +68,7 @@ export const databaseConfiguration = registerAs(
     const validatedEnv = validateAndTransformConfig(
       EnvironmentVariables, // Class ที่ใช้ Validate
       rawConfig, // ข้อมูลดิบ
-      'Auth Config', // Namespace สำหรับ Error Message
+      'Database Config', // Namespace สำหรับ Error Message
     );
 
     // 3. Return ค่าที่ผ่านการ Validate และอาจจะมีการปรับแต่งเพิ่มเติม

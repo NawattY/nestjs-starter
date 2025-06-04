@@ -30,7 +30,7 @@
 │   │   │
 │   │   ├── logger/                 # ระบบ Logging ส่วนกลาง
 │   │   │   ├── logger.module.ts    #   - โมดูลสำหรับให้บริการ LoggerService
-│   │   │   ├── logger.module.ts    #   - เซอร์วิสสำหรับการ Log (อาจจะ wrap Winston หรือ NestJS Logger)
+│   │   │   ├── logger.service.ts   #   - เซอร์วิสสำหรับการ Log (อาจจะ wrap Winston หรือ NestJS Logger)
 │   │   │   ├── logger.interface.ts #   - (Optional) Interface สำหรับ Logger (ถ้ามีการ implement เอง)
 │   │   │   └── index.ts            #   - (Optional) Export ทุกอย่างจาก logger/
 │   │   │
