@@ -3,7 +3,7 @@ import { AppException } from '#shared/exceptions/app.exception';
 import { HttpStatus } from '@nestjs/common';
 
 export class UserAuthException {
-  static credentialMismatch() {
+  static credentialMismatch(): never {
     throw new AppException({
       statusCode: HttpStatus.UNAUTHORIZED,
       errorCode: APP_ERROR_CODE.INVALID_CREDENTIALS,

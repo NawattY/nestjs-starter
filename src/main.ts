@@ -1,17 +1,17 @@
 import { NestFactory, Reflector } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from '#app.module';
 import { HttpExceptionFilter } from '#shared/filters/http-exception.filter';
 import { GlobalSerializerInterceptor } from '#shared/interceptors/global-serializer.interceptor';
 import { setupSwagger } from '#config/swagger.config';
+import { CoreConfigService } from '#core/config/config.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const configService = app.get(ConfigService);
-  const port = configService.get<number>('app.port') ?? 3000;
-  const host = configService.get<string>('app.host') ?? 'localhost';
+  const coreConfigService = app.get(CoreConfigService);
+  const port = coreConfigService.getPort();
+  const host = coreConfigService.getHost();
 
   // 🌐 Set global prefix (optional)
   app.setGlobalPrefix('api');
