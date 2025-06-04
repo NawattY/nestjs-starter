@@ -1,3 +1,4 @@
+import { ERROR_CODE } from '#shared/constants/error-code.constant';
 import {
   ExceptionFilter,
   Catch,
@@ -15,9 +16,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let errorCode = 100500;
-    let errorMessage = 'INTERNAL_SERVER_ERROR';
+    let status: number = HttpStatus.INTERNAL_SERVER_ERROR;
+    let errorCode: number = ERROR_CODE.INTERNAL_SERVER_ERROR;
+    let errorMessage: string = 'INTERNAL_SERVER_ERROR';
     let errors: string[] | null = null;
 
     if (exception instanceof HttpException) {
@@ -41,7 +42,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       ) {
         // ⚠️ ValidationPipe error format
         status = HttpStatus.BAD_REQUEST;
-        errorCode = 100422;
+        errorCode = ERROR_CODE.VALIDATE_ERROR;
         errorMessage = 'VALIDATE_ERROR';
         errors = res.message;
       } else if (typeof res === 'string') {

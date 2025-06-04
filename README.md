@@ -10,30 +10,24 @@ Starter template สำหรับสร้าง NestJS REST API แบบ mai
 src/
 ├── main.ts
 ├── app.module.ts              # รวมทุกโมดูลเข้าด้วยกัน
-
 ├── config/                    # จัดการ config/env
 │   ├── config.module.ts
 │   └── configuration.ts
-
 ├── shared/                    # ของที่แชร์ทุกโมดูล
 │   ├── filters/               # ExceptionFilter
 │   ├── decorators/            # เช่น @CurrentUser()
 │   ├── interceptors/          # เช่น ClassSerializerInterceptor
 │   ├── utils/                 # เช่น handleException
 │   └── constants/             # เช่น default pagination config
-
 ├── database/                  # TypeORM config + migrations
 │   ├── database.module.ts
 │   └── orm.config.ts
-
 ├── modules/
 │   ├── user/                  # ตัวอย่าง module ครบวงจร
 │   └── auth/                  # JWT Auth แบบเรียบง่าย
-
 ├── common/                    # interfaces / base types / pagination dto
 │   ├── dto/
 │   └── interfaces/
-
 ├── libs/                      # โมดูลกลางที่สามารถ reuse ได้
 │   ├── logger/                # Global LoggerService
 │   └── s3/                    # Mocked S3Service
