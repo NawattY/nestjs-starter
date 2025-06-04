@@ -1,3 +1,4 @@
+```
 .
 ├── .env.example                    # ตัวอย่างไฟล์ Environment Variables
 ├── .eslintignore
@@ -127,3 +128,4 @@
     ├── unit/                       # (Optional) โฟลเดอร์สำหรับ Unit Tests แยกตามโครงสร้าง src
     └── e2e/                        # (Optional) โฟลเดอร์สำหรับ E2E Tests
         └── app.e2e-spec.ts
+```

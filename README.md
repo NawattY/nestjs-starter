@@ -24,6 +24,7 @@ A robust and scalable NestJS boilerplate designed to kickstart your backend deve
 
 The project structure is designed to be modular, scalable, and maintainable.
 
+```
 .
 ├── .env.example                    # ตัวอย่างไฟล์ Environment Variables
 ├── .eslintignore
@@ -153,6 +154,7 @@ The project structure is designed to be modular, scalable, and maintainable.
     ├── unit/                       # (Optional) โฟลเดอร์สำหรับ Unit Tests แยกตามโครงสร้าง src
     └── e2e/                        # (Optional) โฟลเดอร์สำหรับ E2E Tests
         └── app.e2e-spec.ts
+```
 
 * **`src/core/`**: Contains foundational modules and services essential for the boilerplate's operation (e.g., config loading mechanism, core database module setup, logger). This part should ideally change minimally when new projects are started from this boilerplate.
 * **`src/database/`**: Holds project-specific database schema definitions, migrations, seed files, and the ORM's data source configuration (`data-source.ts`) used by the CLI. This folder will evolve with the specific project.

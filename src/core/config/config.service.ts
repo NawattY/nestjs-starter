@@ -35,7 +35,7 @@ export class CoreConfigService {
     );
   }
 
-  getNodeEnv(): string {
+  getEnv(): string {
     return (
       this.nestConfigService.get<string>('app.env') ??
       this.nestConfigService.get<string>('NODE_ENV') ??
