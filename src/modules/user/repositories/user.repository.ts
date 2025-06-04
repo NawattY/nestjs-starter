@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../entities/user.entity';
 import { paginate, Pagination } from 'nestjs-typeorm-paginate';
-import { PaginatedRequestInterface } from '#common/interfaces/paginated-request.interface';
+import { PaginatedRequestInterface } from '#shared/interfaces/paginated-request.interface';
 import { DEFAULT_PAGINATION } from '#shared/constants/pagination.constant';
 
 export interface FindUserOptions extends PaginatedRequestInterface {

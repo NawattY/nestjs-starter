@@ -1,5 +1,5 @@
-import ormConfig from '#database/orm.config';
-import { UserEntity } from '#modules/user/entities/user.entity';
+import ormConfig from '../data-source';
+import { UserEntity } from '../../modules/user/entities/user.entity';
 import * as bcrypt from 'bcryptjs';
 
 async function seed() {

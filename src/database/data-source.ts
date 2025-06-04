@@ -1,10 +1,10 @@
-import { DataSource } from 'typeorm';
-import { join } from 'path';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
+import { join } from 'path';
 
 dotenv.config();
 
-export default new DataSource({
+export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   host: process.env.DB_HOST ?? 'localhost',
   port: parseInt(process.env.DB_PORT ?? '5432', 10),
@@ -15,4 +15,7 @@ export default new DataSource({
   entities: [join(__dirname, '../modules/**/entities/**/*.entity{.ts,.js}')],
   synchronize: false,
   logging: process.env.DB_ENABLE_QUERY_LOG === 'true',
-});
+};
+
+const dataSource = new DataSource(dataSourceOptions);
+export default dataSource;

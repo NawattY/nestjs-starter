@@ -1,4 +1,4 @@
-import { ErrorCode } from '#shared/constants/error-code.constant';
+import { APP_ERROR_CODE } from '#constants/error-codes.constants';
 import { AppException } from '#shared/exceptions/app.exception';
 import { HttpStatus } from '@nestjs/common';
 
@@ -6,7 +6,7 @@ export class UserAuthException {
   static credentialMismatch() {
     throw new AppException({
       statusCode: HttpStatus.UNAUTHORIZED,
-      errorCode: ErrorCode.INVALID_CREDENTIALS,
+      errorCode: APP_ERROR_CODE.INVALID_CREDENTIALS,
       errorMessage: 'Username or password is incorrect',
     });
   }

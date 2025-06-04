@@ -1,7 +1,7 @@
 import {
   PaginatedResultLinkInterface,
   PaginatedResultMetaInterface,
-} from '#common/interfaces/paginated-result.interface';
+} from '#shared/interfaces/paginated-result.interface';
 import { Expose } from 'class-transformer';
 
 export abstract class PaginateResponseDto<T> {

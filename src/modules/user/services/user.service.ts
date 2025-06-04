@@ -3,7 +3,7 @@ import { UserRepository } from '../repositories/user.repository';
 import { UserEntity } from '../entities/user.entity';
 import { plainToInstance } from 'class-transformer';
 import { UserResponseDto } from '../dtos/responses/user-response.dto';
-import { PaginatedResultInterface } from '#common/interfaces/paginated-result.interface';
+import { PaginatedResultInterface } from '#shared/interfaces/paginated-result.interface';
 import { UserQueryDto } from '../dtos/requests/user-query.dto';
 
 @Injectable()

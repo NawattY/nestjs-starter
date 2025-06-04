@@ -1,6 +1,6 @@
 import { IsBoolean, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { PaginateQueryDto } from '#common/dto/paginate-query.dto';
+import { PaginateQueryDto } from '#shared/dto/paginate-query.dto';
 import { Transform } from 'class-transformer';
 
 export class UserQueryDto extends PaginateQueryDto {
