@@ -12,7 +12,7 @@ A robust and scalable NestJS boilerplate designed to kickstart your backend deve
     * **Migrations:** Setup for database schema migrations.
     * **Seeding:** Placeholder and structure for database seeding.
 * **Authentication & Authorization:** Basic setup for JWT-based authentication (can be extended).
-* **Logging:** Centralized logging module.
+* **Logging:** Centralized logging module. You can easily extend `LoggerService` to pipe logs to Winston, CloudWatch, or any external system.
 * **Validation:** Request validation using `class-validator` and `class-transformer`.
 * **Error Handling:** Global exception filter for consistent error responses.
 * **Modularity:** Well-defined project structure promoting separation of concerns.
@@ -57,7 +57,7 @@ The project structure is designed to be modular, scalable, and maintainable.
 │   │   │
 │   │   ├── logger/                 # ระบบ Logging ส่วนกลาง
 │   │   │   ├── logger.module.ts    #   - โมดูลสำหรับให้บริการ LoggerService
-│   │   │   ├── logger.service.ts   #   - เซอร์วิสสำหรับการ Log (อาจจะ wrap Winston หรือ NestJS Logger)
+│   │   │   ├── logger.service.ts   #   - เซอร์วิสสำหรับการ Log (เริ่มต้นใช้ console แต่สามารถต่อยอดให้เชื่อมกับ Winston หรือบริการภายนอกได้)
 │   │   │   ├── logger.interface.ts #   - (Optional) Interface สำหรับ Logger (ถ้ามีการ implement เอง)
 │   │   │   └── index.ts            #   - (Optional) Export ทุกอย่างจาก logger/
 │   │   │
@@ -82,7 +82,7 @@ The project structure is designed to be modular, scalable, and maintainable.
 │   │   │   └── .gitkeep            #     (Boilerplate อาจจะว่าง หรือมีตัวอย่าง migration แรก)
 │   │   └── seeds/                  #   - โฟลเดอร์สำหรับ Database Seeds (ไฟล์ .ts หรือตาม library ที่ใช้)
 │   │       └── .gitkeep            #     (ถ้าใช้ SeedModule อาจจะเก็บแค่ raw data หรือไม่ใช้เลย)
-│   │                               #   *Entities: โดยทั่วไปจะอยู่ในแต่ละ Feature Module (e.g., src/modules/users/entities/user.entity.ts)
+│   │                               #   *Entities: โดยทั่วไปจะอยู่ในแต่ละ Feature Module (e.g., src/modules/user/entities/user.entity.ts)
 │   │                               #    และ data-source.ts จะถูกตั้งค่าให้ค้นหา entities จาก path เหล่านั้น (e.g., 'src/modules/**/*.entity.ts')
 │   │
 │   ├── config/                     # Project-Specific Typed Configurations: โครงสร้าง Config ที่ซับซ้อนของโปรเจกต์นี้
@@ -121,10 +121,12 @@ The project structure is designed to be modular, scalable, and maintainable.
 │       │   ├── constants/          #     - Auth-specific constants
 │       │   └── entities/           #     - (Optional, e.g., RefreshTokenEntity, ถ้า UserEntity อยู่อีก Module)
 │       │
-│       ├── users/                  #   - (ตัวอย่าง) โมดูลจัดการผู้ใช้งาน
-│       │   ├── users.module.ts
-│       │   ├── users.controller.ts
-│       │   ├── users.service.ts
+│       ├── user/                   #   - (ตัวอย่าง) โมดูลจัดการผู้ใช้งาน
+│       │   ├── user.module.ts
+│       │   ├── controllers/
+│       │   │   └── user.controller.ts
+│       │   ├── services/
+│       │   │   └── user.service.ts
 │       │   ├── dto/
 │       │   ├── entities/           #     - User.entity.ts
 │       │   ├── repositories/       #     - (Optional) User.repository.ts
@@ -194,6 +196,7 @@ The project structure is designed to be modular, scalable, and maintainable.
     cp .env.example .env
     ```
 2.  Open the `.env` file and update the environment variables according to your setup (database credentials, JWT secrets, API keys, etc.). The required and optional variables are typically defined and validated via `src/core/config/validation.ts` and specific `src/config/*.config.ts` files.
+3.  Environment files are loaded in the following priority: `.env.local`, `.env.$NODE_ENV.local`, `.env.$NODE_ENV`, then `.env`. This allows you to override settings per environment while keeping sane defaults in `.env.example`.
 
 ## 🚀 Running the Application
 
@@ -230,6 +233,7 @@ The project structure is designed to be modular, scalable, and maintainable.
     ```bash
     npm run test:e2e
     ```
+    The `test/` directory includes example E2E tests such as `user.e2e-spec.ts`. Feel free to expand these with more validation and error cases.
 
 * **Run test coverage:**
     ```bash
@@ -244,6 +248,7 @@ This boilerplate uses TypeORM for database interactions.
 
 * The main TypeORM CLI configuration is in `src/database/data-source.ts`. This file is used by TypeORM CLI commands for migrations and other operations. It should be configured to find your entities (typically located within feature modules like `src/modules/**/*.entity.ts`) and migration files.
 * The NestJS database connection module is in `src/core/database/database.module.ts`, which uses the configuration provided via the `CoreConfigService` and/or project-specific typed database configurations from `src/config/database.config.ts`.
+* For advanced setups (multiple connections or read replicas), consider extending `DatabaseModule` with additional configuration files and providers.
 
 ### Migrations
 
@@ -289,6 +294,7 @@ Database seeding can be handled in a few ways:
 * **Environment Variables:** Loaded from `.env` files by `src/core/config/config.module.ts`.
 * **Core Validation:** Basic ENV variables required by the boilerplate can be validated using a Joi schema in `src/core/config/validation.ts`.
 * **Typed Configurations:** Project-specific, structured configurations are defined in `src/config/*.config.ts` using `@nestjs/config`'s `registerAs` pattern. These are validated using `class-validator` via the utility in `src/core/config/utils/validate-config.util.ts`.
+* **Environment Overrides:** You can create environment-specific files such as `.env.development` or `.env.production` to override values. The loading priority is the same as mentioned above.
 * **Accessing Config:** Use the `CoreConfigService` (from `src/core/config/config.service.ts`) or inject typed configurations directly using `@Inject(config.KEY)`.
 
 ## 📄 API Documentation (Swagger)

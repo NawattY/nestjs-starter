@@ -5,6 +5,7 @@ import { UserRepository } from '../repositories/user.repository';
 const mockRepo = {
   findByEmail: jest.fn(),
   findById: jest.fn(),
+  findByMobile: jest.fn(),
   findAll: jest.fn(),
 };
 
@@ -29,12 +30,12 @@ describe('UserService', () => {
     expect(result).toEqual({ id: '1', email: 'a@b.com' });
   });
 
-  it('should find by id when username has no @', async () => {
-    mockRepo.findById.mockResolvedValue({ id: '1' });
+  it('should find by mobile when username has no @', async () => {
+    mockRepo.findByMobile.mockResolvedValue({ id: '1' });
 
     const result = await service.findByUsername('1');
 
-    expect(mockRepo.findById).toHaveBeenCalledWith('1');
+    expect(mockRepo.findByMobile).toHaveBeenCalledWith('1');
     expect(result).toEqual({ id: '1' });
   });
 
