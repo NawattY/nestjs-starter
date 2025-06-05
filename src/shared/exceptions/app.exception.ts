@@ -1,26 +1,35 @@
+import { ERROR_MESSAGE } from '#shared/constants/error-message.constant';
 import { HttpException, HttpStatus } from '@nestjs/common';
 
 interface AppExceptionOptions {
-  statusCode: HttpStatus;
   errorCode: number;
-  errorMessage: string;
+  statusCode: HttpStatus;
   errors?: string[];
 }
 
 export class AppException extends HttpException {
-  constructor({
-    statusCode,
-    errorCode,
-    errorMessage,
-    errors,
-  }: AppExceptionOptions) {
+  public readonly errorCode: number;
+  public readonly statusCode: number;
+  public readonly errors?: Record<string, string[]> | string[];
+
+  constructor(options: AppExceptionOptions) {
+    const {
+      errorCode,
+      statusCode = HttpStatus.INTERNAL_SERVER_ERROR,
+      errors,
+    } = options;
+
     super(
       {
         errorCode,
-        errorMessage,
+        errorMessage: ERROR_MESSAGE[errorCode] ?? 'Unknown error',
         errors,
       },
       statusCode,
     );
+
+    this.errorCode = errorCode;
+    this.statusCode = statusCode;
+    this.errors = errors;
   }
 }

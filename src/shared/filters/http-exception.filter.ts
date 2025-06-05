@@ -1,4 +1,5 @@
 import { ERROR_CODE } from '#shared/constants/error-code.constant';
+import { ERROR_MESSAGE } from '#shared/constants/error-message.constant';
 import {
   ExceptionFilter,
   Catch,
@@ -43,7 +44,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
         // ⚠️ ValidationPipe error format
         status = HttpStatus.BAD_REQUEST;
         errorCode = ERROR_CODE.VALIDATE_ERROR;
-        errorMessage = 'VALIDATE_ERROR';
+        errorMessage =
+          ERROR_MESSAGE[ERROR_CODE.VALIDATE_ERROR] ?? 'VALIDATE ERROR';
         errors = res.message;
       } else if (typeof res === 'string') {
         errorMessage = res;
