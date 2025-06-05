@@ -66,10 +66,6 @@
 │   │   ├── swagger.config.ts       #   - API documentation config
 │   │   └── index.ts                #   - Export array ของ configuration factories ทั้งหมดเพื่อให้ CoreConfigModule โหลด
 │   │
-│   ├── constants/                  # Project-Specific Global Constants: ค่าคงที่ที่ใช้หลายส่วนใน "โปรเจกต์นี้"
-│   │   ├── index.ts
-│   │   └── error-codes.constants.ts #  - (ตัวอย่าง)
-│   │
 │   ├── shared/                     # Boilerplate's Shared Components: Utilities, DTOs พื้นฐาน ที่ใช้ซ้ำได้ทั่วไปใน Boilerplate
 │   │   ├── constants/              #   - ค่าคงที่ที่เป็นสากลมากๆ ของ Boilerplate (ควรมีน้อย)
 │   │   ├── decorators/             #   - Custom decorators ทั่วไป
