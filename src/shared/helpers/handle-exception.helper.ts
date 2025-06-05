@@ -10,8 +10,7 @@ export function handleException(
   if (err instanceof AppException) throw err;
 
   return new AppException({
-    statusCode: fallbackStatus,
     errorCode: fallbackCode,
-    errorMessage: fallbackMessage,
+    statusCode: fallbackStatus,
   });
 }
