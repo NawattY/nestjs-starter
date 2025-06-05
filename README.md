@@ -92,8 +92,12 @@ The project structure is designed to be modular, scalable, and maintainable.
 │   │   ├── swagger.config.ts       #   - API documentation config
 │   │   └── index.ts                #   - Export array ของ configuration factories ทั้งหมดเพื่อให้ CoreConfigModule โหลด
 │   │
+│   ├── constants/                      # Project-Specific Global Constants: ค่าคงที่ที่ใช้หลายส่วนใน "โปรเจกต์นี้"
+│   │   ├── error-codes.constants.ts    #  - Error Code Constants
+│   │   ├── error-message.constants.ts  #  - Error Message Constants (Map from Error Code Constants)
+│   │   └── pagination.constants.ts     #  - Default Pagination
+│   │
 │   ├── shared/                     # Boilerplate's Shared Components: Utilities, DTOs พื้นฐาน ที่ใช้ซ้ำได้ทั่วไปใน Boilerplate
-│   │   ├── constants/              #   - ค่าคงที่ที่เป็นสากลมากๆ ของ Boilerplate (ควรมีน้อย)
 │   │   ├── decorators/             #   - Custom decorators ทั่วไป
 │   │   ├── dto/                    #   - Base DTOs (e.g., PaginationDto, SuccessResponseDto)
 │   │   ├── exceptions/             #   - Base custom exceptions
@@ -157,6 +161,7 @@ The project structure is designed to be modular, scalable, and maintainable.
 * **`src/core/`**: Contains foundational modules and services essential for the boilerplate's operation (e.g., config loading mechanism, core database module setup, logger). This part should ideally change minimally when new projects are started from this boilerplate.
 * **`src/database/`**: Holds project-specific database schema definitions, migrations, seed files, and the ORM's data source configuration (`data-source.ts`) used by the CLI. This folder will evolve with the specific project.
 * **`src/config/`**: Defines project-specific typed configuration objects (using `@nestjs/config`'s `registerAs` and validated by `src/core/config/utils/validate-config.util.ts`). These are loaded by the `CoreConfigModule`.
+* **`src/constants/`**: Stores global constants that are specific to the project and used across multiple modules within this project.
 * **`src/shared/`**: Includes reusable utilities, DTOs, interfaces, decorators, filters, guards, etc., that are generic enough to be shared by multiple feature modules *within the boilerplate's typical use case*.
 * **`src/modules/`**: Houses feature-specific modules, each typically containing its own controllers, services, DTOs, entities, and constants. This is where most of the application's business logic will reside.
 

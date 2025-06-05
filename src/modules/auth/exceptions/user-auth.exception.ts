@@ -1,4 +1,4 @@
-import { ERROR_CODE } from '#shared/constants/error-code.constant';
+import { ERROR_CODE } from '#constants/error-code.constant';
 import { AppException } from '#shared/exceptions/app.exception';
 import { HttpStatus } from '@nestjs/common';
 
