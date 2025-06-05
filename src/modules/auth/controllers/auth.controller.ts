@@ -49,7 +49,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@CurrentUser() user: UserEntity) {
-    console.log('Current User:', user);
     return plainToInstance(UserResponseDto, user);
   }
 }
