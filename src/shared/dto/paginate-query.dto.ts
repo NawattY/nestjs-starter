@@ -1,4 +1,4 @@
-import { DEFAULT_PAGINATION } from '#shared/constants/pagination.constant';
+import { DEFAULT_PAGINATION } from '#constants/pagination.constant';
 import { PaginatedRequestInterface } from '#shared/interfaces/paginated-request.interface';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';

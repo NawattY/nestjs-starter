@@ -1,7 +1,7 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { UserQueryDto } from './user-query.dto';
-import { DEFAULT_PAGINATION } from '#shared/constants/pagination.constant';
+import { DEFAULT_PAGINATION } from '#constants/pagination.constant';
 
 describe('UserQueryDto', () => {
   it('transforms values correctly', async () => {

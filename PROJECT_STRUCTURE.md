@@ -66,8 +66,12 @@
 │   │   ├── swagger.config.ts       #   - API documentation config
 │   │   └── index.ts                #   - Export array ของ configuration factories ทั้งหมดเพื่อให้ CoreConfigModule โหลด
 │   │
+│   ├── constants/                      # Project-Specific Global Constants: ค่าคงที่ที่ใช้หลายส่วนใน "โปรเจกต์นี้"
+│   │   ├── error-codes.constants.ts    #  - Error Code Constants
+│   │   ├── error-message.constants.ts  #  - Error Message Constants (Map from Error Code Constants)
+│   │   └── pagination.constants.ts     #  - Default Pagination
+│   │
 │   ├── shared/                     # Boilerplate's Shared Components: Utilities, DTOs พื้นฐาน ที่ใช้ซ้ำได้ทั่วไปใน Boilerplate
-│   │   ├── constants/              #   - ค่าคงที่ที่เป็นสากลมากๆ ของ Boilerplate (ควรมีน้อย)
 │   │   ├── decorators/             #   - Custom decorators ทั่วไป
 │   │   ├── dto/                    #   - Base DTOs (e.g., PaginationDto, SuccessResponseDto)
 │   │   ├── exceptions/             #   - Base custom exceptions
