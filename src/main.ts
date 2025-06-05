@@ -1,16 +1,17 @@
 import { NestFactory, Reflector } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ConfigService } from '@nestjs/config';
-import { Logger } from '@nestjs/common';
-import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
-import { GlobalSerializerInterceptor } from './shared/interceptors/serializer.interceptor';
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { AppModule } from '#app.module';
+import { HttpExceptionFilter } from '#shared/filters/http-exception.filter';
+import { GlobalSerializerInterceptor } from '#shared/interceptors/global-serializer.interceptor';
+import { setupSwagger } from '#config/swagger.config';
+import { CoreConfigService } from '#core/config/config.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const configService = app.get(ConfigService);
-  const port = configService.get<number>('app.port') ?? 3000;
-  const host = configService.get<string>('app.host') ?? 'localhost';
+  const coreConfigService = app.get(CoreConfigService);
+  const port = coreConfigService.getPort();
+  const host = coreConfigService.getHost();
 
   // 🌐 Set global prefix (optional)
   app.setGlobalPrefix('api');
@@ -25,6 +26,17 @@ async function bootstrap() {
   app.useGlobalInterceptors(
     new GlobalSerializerInterceptor(app.get(Reflector)),
   );
+
+  // ✅ เปิด ValidationPipe แบบ global
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // ตัด field ที่ไม่อยู่ใน DTO
+      forbidNonWhitelisted: true, // ถ้ามี field เกินมา → throw error
+      transform: true, // แปลง primitive (เช่น string → number) ตาม type ของ DTO
+    }),
+  );
+
+  setupSwagger(app);
 
   // ✅ Start App
   await app.listen(port, host);

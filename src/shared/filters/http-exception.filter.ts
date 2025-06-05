@@ -1,3 +1,4 @@
+import { ERROR_CODE } from '#shared/constants/error-code.constant';
 import {
   ExceptionFilter,
   Catch,
@@ -6,6 +7,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { get, toInteger, toString } from 'lodash';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -14,24 +16,77 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    let message: string | object = 'Internal server error';
+    let status: number = HttpStatus.INTERNAL_SERVER_ERROR;
+    let errorCode: number = ERROR_CODE.INTERNAL_SERVER_ERROR;
+    let errorMessage: string = 'INTERNAL_SERVER_ERROR';
+    let errors: string[] | null = null;
 
     if (exception instanceof HttpException) {
-      message = exception.getResponse();
+      const res = exception.getResponse();
+      status = exception.getStatus();
+
+      if (
+        typeof res === 'object' &&
+        res !== null &&
+        'errorCode' in res &&
+        'errorMessage' in res
+      ) {
+        // เป็น AppException ที่เราสร้างเอง
+        errorCode = toInteger(res.errorCode);
+        errorMessage = toString(res.errorMessage);
+        errors = get(res, 'errors') ?? [];
+      } else if (
+        typeof res === 'object' &&
+        'message' in res &&
+        Array.isArray(res.message)
+      ) {
+        // ⚠️ ValidationPipe error format
+        status = HttpStatus.BAD_REQUEST;
+        errorCode = ERROR_CODE.VALIDATE_ERROR;
+        errorMessage = 'VALIDATE_ERROR';
+        errors = res.message;
+      } else if (typeof res === 'string') {
+        errorMessage = res;
+      } else {
+        errorMessage =
+          get(res, 'error') ?? get(res, 'message') ?? 'HTTP_EXCEPTION_ERROR';
+        const message = get(res, 'message');
+        if (typeof message === 'string') {
+          errors = [message];
+        }
+      }
     } else if (exception instanceof Error) {
-      message = exception.message;
+      errorMessage = exception.message;
     }
 
     response.status(status).json({
-      statusCode: status,
-      timestamp: new Date().toISOString(),
+      status: {
+        code: status,
+        message: this.getStatusText(status),
+      },
+      error: {
+        code: errorCode,
+        message: errorMessage,
+        errors,
+      },
       path: request.url,
-      message,
+      timestamp: new Date().toISOString(),
+      stack:
+        process.env.NODE_ENV !== 'production'
+          ? get(exception, 'stack')
+          : undefined,
     });
+  }
+
+  private getStatusText(status: number): string {
+    const map: Record<number, string> = {
+      400: 'Bad Request',
+      401: 'Unauthorized',
+      403: 'Forbidden',
+      404: 'Not Found',
+      422: 'Unprocessable Entity',
+      500: 'Internal Server Error',
+    };
+    return map[status] || 'Error';
   }
 }

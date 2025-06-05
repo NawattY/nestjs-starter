@@ -1,98 +1,324 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# NestJS Starter
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A robust and scalable NestJS boilerplate designed to kickstart your backend development. This boilerplate includes pre-configured modules for common tasks, a well-defined project structure, and best practices for building enterprise-grade applications.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## ✨ Key Features
 
-## Description
+* **NestJS Framework:** A progressive Node.js framework for building efficient, reliable, and scalable server-side applications.
+* **TypeScript:** Superset of JavaScript for type safety and better developer experience.
+* **Configuration Management:** Flexible configuration loading (`.env` files) and typed configurations using `@nestjs/config`, with a clear separation between core mechanism and project-specific settings. Includes validation for environment variables.
+* **Database Integration:**
+    * **TypeORM:** Pre-configured for database interaction.
+    * **Migrations:** Setup for database schema migrations.
+    * **Seeding:** Placeholder and structure for database seeding.
+* **Authentication & Authorization:** Basic setup for JWT-based authentication (can be extended).
+* **Logging:** Centralized logging module. You can easily extend `LoggerService` to pipe logs to Winston, CloudWatch, or any external system.
+* **Validation:** Request validation using `class-validator` and `class-transformer`.
+* **Error Handling:** Global exception filter for consistent error responses.
+* **Modularity:** Well-defined project structure promoting separation of concerns.
+* **Docker Support:** Includes `Dockerfile` and `docker-compose.yml` for easy containerization.
+* **Testing:** Setup for unit and E2E tests with Jest.
+* **API Documentation:** Automated API documentation with Swagger (OpenAPI).
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📂 Project Structure Overview
 
-## Project setup
+The project structure is designed to be modular, scalable, and maintainable.
 
-```bash
-$ npm install
+```
+.
+├── .env.example                    # ตัวอย่างไฟล์ Environment Variables
+├── .eslintignore
+├── .gitignore
+├── .prettierignore
+├── .prettierrc                     # Prettier Configuration
+├── eslint.config.mjs               # ESLint Configuration
+├── docker-compose.yml              # (Optional) สำหรับ Docker
+├── Dockerfile                      # (Optional) สำหรับ Docker
+├── nest-cli.json
+├── package.json
+├── README.md
+├── tsconfig.build.json
+├── tsconfig.json
+│
+├── src/
+│   ├── main.ts                     # ไฟล์เริ่มต้นสำหรับ bootstrap แอปพลิเคชัน
+│   ├── app.module.ts               # โมดูลหลักของแอปพลิเคชัน
+│   │
+│   ├── core/                       # Boilerplate's Core: กลไกพื้นฐาน, ไม่ควรเปลี่ยนบ่อยเมื่อเริ่มโปรเจกต์ใหม่
+│   │   ├── config/                 #   - กลไกการจัดการ Configuration
+│   │   │   ├── config.module.ts    #     - CoreConfigModule (setup @nestjs/config, load .env, load project configs from src/config/)
+│   │   │   ├── config.service.ts   #     - CoreConfigService (wrapper service สำหรับเข้าถึง config)
+│   │   │   ├── validation.ts       #     - (Joi) Schema สำหรับ validate ENV vars พื้นฐานที่ Boilerplate คาดหวัง
+│   │   │   └── utils/
+│   │   │       └── validate-config.util.ts # - Utility function กลางสำหรับ validate project-specific typed configs
+│   │   │
+│   │   ├── database/               #   - กลไกการเชื่อมต่อฐานข้อมูลของ NestJS
+│   │   │   └── database.module.ts  #     - CoreDatabaseModule (e.g., TypeOrmModule.forRootAsync() โดยใช้ DataSource จาก src/database/data-source.ts)
+│   │   │
+│   │   ├── logger/                 # ระบบ Logging ส่วนกลาง
+│   │   │   ├── logger.module.ts    #   - โมดูลสำหรับให้บริการ LoggerService
+│   │   │   ├── logger.service.ts   #   - เซอร์วิสสำหรับการ Log (เริ่มต้นใช้ console แต่สามารถต่อยอดให้เชื่อมกับ Winston หรือบริการภายนอกได้)
+│   │   │   ├── logger.interface.ts #   - (Optional) Interface สำหรับ Logger (ถ้ามีการ implement เอง)
+│   │   │   └── index.ts            #   - (Optional) Export ทุกอย่างจาก logger/
+│   │   │
+│   │   ├── caching/                # (ตัวอย่าง) กลไก Caching
+│   │   │   ├── caching.module.ts   #   - โมดูลสำหรับตั้งค่าและให้บริการ Caching
+│   │   │   ├── caching.service.ts  #   - เซอร์วิสสำหรับจัดการ Cache
+│   │   │   └── index.ts            #   - (Optional) Export ทุกอย่างจาก caching/
+│   │   │
+│   │   ├── mailing/                # (ตัวอย่าง) กลไกการส่ง Email
+│   │   │   ├── mailing.module.ts   #   - โมดูลสำหรับตั้งค่าและให้บริการ Mailing
+│   │   │   ├── mailing.service.ts  #   - เซอร์วิสสำหรับส่งอีเมล
+│   │   │   ├── templates/          #   - (Optional) โฟลเดอร์สำหรับเก็บ Email Templates
+│   │   │       └── welcome.hbs     #     (ตัวอย่าง template)
+│   │   │   └── index.ts            #   - (Optional) Export ทุกอย่างจาก mailing/
+│   │   │
+│   │   └── index.ts                #   - (Optional) ไฟล์หลักสำหรับ re-export โมดูลทั้งหมดจาก core/ เพื่อให้ AppModule สามารถ import โมดูลจาก core/ ได้ง่ายขึ้น เช่น import { ConfigModule, DatabaseModule, LoggerModule } from '#core'; (จะต้องตั้งค่า path alias '#' ใน tsconfig.json ด้วย)
+│   │
+│   ├── database/                   # Project-Specific DB: Schema, Migrations, Seeds & ORM Config โดยตรง
+│   │   ├── data-source.ts          #   - ไฟล์ Config หลักสำหรับ ORM CLI (e.g., TypeORM DataSource)
+│   │   │                           #     (จะ config path ไปยัง entities ใน feature modules และ migrations ที่นี่)
+│   │   ├── migrations/             #   - โฟลเดอร์สำหรับ Database Migrations (ไฟล์ .ts)
+│   │   │   └── .gitkeep            #     (Boilerplate อาจจะว่าง หรือมีตัวอย่าง migration แรก)
+│   │   └── seeds/                  #   - โฟลเดอร์สำหรับ Database Seeds (ไฟล์ .ts หรือตาม library ที่ใช้)
+│   │       └── .gitkeep            #     (ถ้าใช้ SeedModule อาจจะเก็บแค่ raw data หรือไม่ใช้เลย)
+│   │                               #   *Entities: โดยทั่วไปจะอยู่ในแต่ละ Feature Module (e.g., src/modules/user/entities/user.entity.ts)
+│   │                               #    และ data-source.ts จะถูกตั้งค่าให้ค้นหา entities จาก path เหล่านั้น (e.g., 'src/modules/**/*.entity.ts')
+│   │
+│   ├── config/                     # Project-Specific Typed Configurations: โครงสร้าง Config ที่ซับซ้อนของโปรเจกต์นี้
+│   │   ├── app.config.ts           #   - (ตัวอย่าง) ใช้ registerAs และ validateAndTransformConfig จาก core
+│   │   ├── jwt.config.ts           #   - (ตัวอย่าง)
+│   │   ├── database.config.ts      #   - (ตัวอย่าง) Typed config สำหรับ database connection details (ถ้าจำเป็น)
+│   │   ├── swagger.config.ts       #   - API documentation config
+│   │   └── index.ts                #   - Export array ของ configuration factories ทั้งหมดเพื่อให้ CoreConfigModule โหลด
+│   │
+│   ├── constants/                  # Project-Specific Global Constants: ค่าคงที่ที่ใช้หลายส่วนใน "โปรเจกต์นี้"
+│   │   ├── index.ts
+│   │   └── error-codes.constants.ts #  - (ตัวอย่าง)
+│   │
+│   ├── shared/                     # Boilerplate's Shared Components: Utilities, DTOs พื้นฐาน ที่ใช้ซ้ำได้ทั่วไปใน Boilerplate
+│   │   ├── constants/              #   - ค่าคงที่ที่เป็นสากลมากๆ ของ Boilerplate (ควรมีน้อย)
+│   │   ├── decorators/             #   - Custom decorators ทั่วไป
+│   │   ├── dto/                    #   - Base DTOs (e.g., PaginationDto, SuccessResponseDto)
+│   │   ├── exceptions/             #   - Base custom exceptions
+│   │   ├── filters/                #   - Global Exception Filters (e.g., GlobalExceptionsFilter)
+│   │   ├── guards/                 #   - Global Guards หรือ Guards ที่ใช้ได้ทั่วไปมากๆ (ถ้ามี)
+│   │   ├── helpers/                #   - (หรือ utils/) Utility functions ทั่วไป
+│   │   ├── interfaces/             #   - TypeScript interfaces ที่ใช้ได้ทั่วไป
+│   │   ├── interceptors/           #   - Global Interceptors (e.g., TransformResponseInterceptor)
+│   │   ├── pipes/                  #   - Global Pipes (e.g., setup for ValidationPipe)
+│   │   └── providers/              #   - Shared utility services (ถ้ามี)
+│   │
+│   └── modules/                    # (หรือ features/) Feature Modules: ส่วน Business Logic หลักของแอปพลิเคชัน
+│       ├── auth/                   #   - (ตัวอย่าง) โมดูลการยืนยันตัวตนและสิทธิ์
+│       │   ├── auth.module.ts
+│       │   ├── auth.controller.ts
+│       │   ├── auth.service.ts
+│       │   ├── strategies/         #     - Passport strategies
+│       │   ├── guards/             #     - Feature-specific guards
+│       │   ├── decorators/         #     - Auth-specific decorators
+│       │   ├── dto/
+│       │   ├── constants/          #     - Auth-specific constants
+│       │   └── entities/           #     - (Optional, e.g., RefreshTokenEntity, ถ้า UserEntity อยู่อีก Module)
+│       │
+│       ├── user/                   #   - (ตัวอย่าง) โมดูลจัดการผู้ใช้งาน
+│       │   ├── user.module.ts
+│       │   ├── controllers/
+│       │   │   └── user.controller.ts
+│       │   ├── services/
+│       │   │   └── user.service.ts
+│       │   ├── dto/
+│       │   ├── entities/           #     - User.entity.ts
+│       │   ├── repositories/       #     - (Optional) User.repository.ts
+│       │   └── constants/
+│       │
+│       ├── health/                 #   - (Recommended) โมดูลสำหรับ Health Check
+│       │   ├── health.module.ts
+│       │   └── health.controller.ts
+│       │
+│       ├── seed/                   #   - (Optional) โมดูลสำหรับจัดการ Database Seeding ที่ซับซ้อนด้วย NestJS Services
+│       │   ├── seed.module.ts      #     (เป็นทางเลือก/ส่วนเสริมของ src/database/seeds/)
+│       │   ├── seed.service.ts
+│       │   └── seeders/            #     - (Optional) โฟลเดอร์เก็บ seeder logic ย่อยๆ
+│       │
+│       └── [other-feature-module]/ #   - โครงสร้างสำหรับ Feature Module อื่นๆ
+│           ├── [feature].module.ts
+│           ├── [feature].controller.ts
+│           ├── [feature].service.ts
+│           ├── dto/
+│           ├── entities/
+│           ├── constants/
+│           └── ...
+│
+└── test/                           # ไฟล์สำหรับ Unit Tests และ E2E Tests
+    ├── jest-e2e.json
+    ├── jest.config.js              # (หรือ vitest.config.ts ถ้าใช้ Vitest)
+    ├── unit/                       # (Optional) โฟลเดอร์สำหรับ Unit Tests แยกตามโครงสร้าง src
+    └── e2e/                        # (Optional) โฟลเดอร์สำหรับ E2E Tests
+        └── app.e2e-spec.ts
 ```
 
-## Compile and run the project
+* **`src/core/`**: Contains foundational modules and services essential for the boilerplate's operation (e.g., config loading mechanism, core database module setup, logger). This part should ideally change minimally when new projects are started from this boilerplate.
+* **`src/database/`**: Holds project-specific database schema definitions, migrations, seed files, and the ORM's data source configuration (`data-source.ts`) used by the CLI. This folder will evolve with the specific project.
+* **`src/config/`**: Defines project-specific typed configuration objects (using `@nestjs/config`'s `registerAs` and validated by `src/core/config/utils/validate-config.util.ts`). These are loaded by the `CoreConfigModule`.
+* **`src/constants/`**: Stores global constants that are specific to the project and used across multiple modules within this project.
+* **`src/shared/`**: Includes reusable utilities, DTOs, interfaces, decorators, filters, guards, etc., that are generic enough to be shared by multiple feature modules *within the boilerplate's typical use case*.
+* **`src/modules/`**: Houses feature-specific modules, each typically containing its own controllers, services, DTOs, entities, and constants. This is where most of the application's business logic will reside.
 
-```bash
-# development
-$ npm run start
+## 🚀 Getting Started
 
-# watch mode
-$ npm run start:dev
+### Prerequisites
 
-# production mode
-$ npm run start:prod
-```
+* Node.js (v18.x or later recommended)
+* npm (v9.x or later) or yarn
+* Docker and Docker Compose (Optional, for containerized development/deployment)
+* A running database instance (e.g., PostgreSQL, MySQL) accessible to the application.
 
-## Run tests
+### Installation
 
-```bash
-# unit tests
-$ npm run test
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/your-username/your-repo.git](https://github.com/your-username/your-repo.git) your-project-name
+    cd your-project-name
+    ```
 
-# e2e tests
-$ npm run test:e2e
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
 
-# test coverage
-$ npm run test:cov
-```
+### Environment Variables
 
-## Deployment
+1.  Create a `.env` file by copying the example:
+    ```bash
+    cp .env.example .env
+    ```
+2.  Open the `.env` file and update the environment variables according to your setup (database credentials, JWT secrets, API keys, etc.). The required and optional variables are typically defined and validated via `src/core/config/validation.ts` and specific `src/config/*.config.ts` files.
+3.  Environment files are loaded in the following priority: `.env.local`, `.env.$NODE_ENV.local`, `.env.$NODE_ENV`, then `.env`. This allows you to override settings per environment while keeping sane defaults in `.env.example`.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## 🚀 Running the Application
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+* **Development Mode (with hot-reloading):**
+    ```bash
+    npm run start:dev
+    ```
+    The application will be available at `http://localhost:PORT` (where `PORT` is defined in your `.env` file, typically 3000 or 3001).
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+* **Watch Mode (similar to dev):**
+    ```bash
+    npm run start:watch
+    ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+* **Production Mode:**
+    First, build the application:
+    ```bash
+    npm run build
+    ```
+    Then, run the compiled application:
+    ```bash
+    npm run start:prod
+    ```
 
-## Resources
+## 🧪 Testing
 
-Check out a few resources that may come in handy when working with NestJS:
+* **Run all unit tests:**
+    ```bash
+    npm run test
+    ```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+* **Run all E2E tests:**
+    Ensure your database and other external services required for E2E tests are running.
+    ```bash
+    npm run test:e2e
+    ```
+    The `test/` directory includes example E2E tests such as `user.e2e-spec.ts`. Feel free to expand these with more validation and error cases.
 
-## Support
+* **Run test coverage:**
+    ```bash
+    npm run test:cov
+    ```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 🗃️ Database (TypeORM)
 
-## Stay in touch
+This boilerplate uses TypeORM for database interactions.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Configuration
 
-## License
+* The main TypeORM CLI configuration is in `src/database/data-source.ts`. This file is used by TypeORM CLI commands for migrations and other operations. It should be configured to find your entities (typically located within feature modules like `src/modules/**/*.entity.ts`) and migration files.
+* The NestJS database connection module is in `src/core/database/database.module.ts`, which uses the configuration provided via the `CoreConfigService` and/or project-specific typed database configurations from `src/config/database.config.ts`.
+* For advanced setups (multiple connections or read replicas), consider extending `DatabaseModule` with additional configuration files and providers.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Migrations
+
+Migrations are managed using TypeORM CLI commands, wrapped as npm scripts in `package.json`.
+
+1.  **Generate a new migration:**
+    (Replace `YourMigrationName` with a descriptive name, e.g., `CreateUsersTable`)
+    ```bash
+    npm run migration:generate --name=YourMigrationName
+    ```
+    This will create a new migration file in `src/database/migrations/`. Edit this file to define your schema changes.
+
+2.  **Run pending migrations:**
+    This applies all pending migrations to your database.
+    ```bash
+    npm run migration:run
+    ```
+
+3.  **Revert the last applied migration:**
+    ```bash
+    npm run migration:revert
+    ```
+
+*Note: Ensure your `NODE_ENV` and `.env` file are correctly set up so that the `data-source.ts` can connect to the correct database for migration operations.*
+
+### Seeding
+
+Database seeding can be handled in a few ways:
+
+1.  **Simple Seed Files:** Place seed scripts or data files in `src/database/seeds/` and use a library like `typeorm-extension` or custom scripts to execute them.
+    * Example script in `package.json` (you'll need to implement `seed:run:script`):
+        ```bash
+        # npm run seed:run:script
+        ```
+2.  **Dedicated Seed Module:** For more complex seeding logic involving NestJS services and dependency injection, a `SeedModule` is provided (optional) in `src/modules/seed/`. You can create a custom NestJS CLI command or script to trigger services within this module.
+    * Example (if you implement a NestJS command for seeding):
+        ```bash
+        # node dist/main.js seed
+        ```
+
+## ⚙️ Configuration Management
+
+* **Environment Variables:** Loaded from `.env` files by `src/core/config/config.module.ts`.
+* **Core Validation:** Basic ENV variables required by the boilerplate can be validated using a Joi schema in `src/core/config/validation.ts`.
+* **Typed Configurations:** Project-specific, structured configurations are defined in `src/config/*.config.ts` using `@nestjs/config`'s `registerAs` pattern. These are validated using `class-validator` via the utility in `src/core/config/utils/validate-config.util.ts`.
+* **Environment Overrides:** You can create environment-specific files such as `.env.development` or `.env.production` to override values. The loading priority is the same as mentioned above.
+* **Accessing Config:** Use the `CoreConfigService` (from `src/core/config/config.service.ts`) or inject typed configurations directly using `@Inject(config.KEY)`.
+
+## 📄 API Documentation (Swagger)
+
+If Swagger is enabled (typically in `main.ts`), API documentation will be available at `/api` (or your configured path) when the application is running.
+Example: `http://localhost:PORT/api`
+
+## 🐳 Docker Support (Optional)
+
+This boilerplate includes a `Dockerfile` and `docker-compose.yml` for containerized development and deployment.
+
+1.  **Build and run with Docker Compose:**
+    (Ensure your `.env` file is configured, Docker Compose will use it)
+    ```bash
+    docker-compose up --build
+    ```
+
+2.  **Stop containers:**
+    ```bash
+    docker-compose down
+    ```
+
+## 📜 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+*This README provides a comprehensive guide to the boilerplate. Remember to replace placeholders like `your-username/your-repo`, and update specific examples to match your final implementation.*
