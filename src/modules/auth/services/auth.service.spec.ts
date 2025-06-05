@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserService } from '#modules/user/services/user.service';
 import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
@@ -39,14 +38,21 @@ describe('AuthService', () => {
   });
 
   it('should login successfully', async () => {
-    mockUserService.findByUsername.mockResolvedValue({ id: '1', password: 'hash' });
+    mockUserService.findByUsername.mockResolvedValue({
+      id: '1',
+      password: 'hash',
+    });
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
     (uuidv4 as jest.Mock).mockReturnValue('refresh');
     mockJwtService.sign.mockReturnValue('token');
 
     const result = await service.login({ username: 'user', password: 'pass' });
 
-    expect(result).toEqual({ accessToken: 'token', refreshToken: 'refresh', userId: '1' });
+    expect(result).toEqual({
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      userId: '1',
+    });
     expect(mockTokenRepo.createToken).toHaveBeenCalledWith('1', 'refresh');
   });
 
@@ -59,22 +65,32 @@ describe('AuthService', () => {
   });
 
   it('should refresh token', async () => {
-    mockTokenRepo.findByToken.mockResolvedValue({ userId: '1', revokedAt: null });
+    mockTokenRepo.findByToken.mockResolvedValue({
+      userId: '1',
+      revokedAt: null,
+    });
     mockUserService.findById.mockResolvedValue({ id: '1' });
     mockJwtService.sign.mockReturnValue('new');
 
     const result = await service.refresh('refresh');
-    expect(result).toEqual({ accessToken: 'new' });
+    expect(result).toEqual({
+      accessToken: 'new',
+      refreshToken: 'refresh',
+      userId: '1',
+    });
   });
 
   it('should throw when refresh token invalid', async () => {
     mockTokenRepo.findByToken.mockResolvedValue(null);
 
-    await expect(service.refresh('bad')).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service.refresh('bad')).rejects.toBeInstanceOf(AppException);
   });
 
   it('should revoke token', async () => {
-    mockTokenRepo.findByToken.mockResolvedValue({ userId: '1', revokedAt: null });
+    mockTokenRepo.findByToken.mockResolvedValue({
+      userId: '1',
+      revokedAt: null,
+    });
 
     const result = await service.revoke('1', 'refresh');
     expect(result).toEqual({ success: true });
@@ -84,6 +100,8 @@ describe('AuthService', () => {
   it('should throw when revoke token invalid', async () => {
     mockTokenRepo.findByToken.mockResolvedValue(null);
 
-    await expect(service.revoke('1', 'bad')).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service.revoke('1', 'bad')).rejects.toBeInstanceOf(
+      AppException,
+    );
   });
 });

@@ -14,8 +14,12 @@ describe('AuthController (e2e)', () => {
       refreshToken: 'refresh',
       userId: '1',
     }),
-    refresh: jest.fn(),
-    revoke: jest.fn(),
+    refresh: jest.fn().mockResolvedValue({
+      accessToken: 'new',
+      refreshToken: 'refresh',
+      userId: '1',
+    }),
+    revoke: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeAll(async () => {
@@ -25,14 +29,16 @@ describe('AuthController (e2e)', () => {
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({
-        canActivate: (context) => {
-          const req = context.switchToHttp().getRequest();
+        canActivate: (context: import('@nestjs/common').ExecutionContext) => {
+          const req = context
+            .switchToHttp()
+            .getRequest<{ user?: Partial<UserEntity> }>();
           req.user = {
             id: '1',
             email: 'a@b.com',
             fullName: 'A',
             isActive: true,
-          } as Partial<UserEntity>;
+          };
           return true;
         },
       })
@@ -65,14 +71,27 @@ describe('AuthController (e2e)', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    return request(app.getHttpServer()).get('/auth/me').expect(200).expect({
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      isActive: user.isActive,
+    });
+  });
+
+  it('/auth/refresh (POST)', () => {
     return request(app.getHttpServer())
-      .get('/auth/me')
-      .expect(200)
-      .expect({
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        isActive: user.isActive,
-      });
+      .post('/auth/refresh')
+      .send({ refreshToken: 'refresh' })
+      .expect(201)
+      .expect({ accessToken: 'new', refreshToken: 'refresh', userId: '1' });
+  });
+
+  it('/auth/revoke (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/auth/revoke')
+      .send({ refreshToken: 'refresh' })
+      .expect(201)
+      .expect('');
   });
 });
