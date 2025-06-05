@@ -128,6 +128,7 @@ The project structure is designed to be modular, scalable, and maintainable.
 │       │   ├── dto/
 │       │   ├── entities/           #     - User.entity.ts
 │       │   ├── repositories/       #     - (Optional) User.repository.ts
+│       │   ├── data-access/        #     - (Optional) Data Access Objects (DAOs) / Data Access Layer (DAL) Components
 │       │   └── constants/
 │       │
 │       ├── health/                 #   - (Recommended) โมดูลสำหรับ Health Check

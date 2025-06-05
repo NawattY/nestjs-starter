@@ -1,16 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UserService } from '#modules/user/services/user.service';
 import { TokenPayload } from '../interfaces/token-payload.interface';
 import { AuthConfig, authConfiguration } from '#config/auth.config';
+import { UserDao } from '#modules/user/data-access/user.dao';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     @Inject(authConfiguration.KEY)
     private readonly authConfig: AuthConfig,
-    private readonly userService: UserService,
+    private readonly userDao: UserDao,
   ) {
     const jwtSecret = authConfig.jwtSecret;
     if (!jwtSecret) {
@@ -25,6 +25,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: TokenPayload) {
-    return this.userService.findById(payload.sub);
+    return this.userDao.findByIdOrFail(payload.sub);
   }
 }

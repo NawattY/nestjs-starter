@@ -1,4 +1,3 @@
-import { UserService } from '#modules/user/services/user.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -6,18 +5,26 @@ import { v4 as uuidv4 } from 'uuid';
 import { LoginRequestDto } from '../dtos/requests/login-request.dto';
 import { UserAuthException } from '../exceptions/user-auth.exception';
 import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
+import { UserDao } from '#modules/user/data-access/user.dao';
+import { UserEntity } from '#modules/user/entities/user.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly userService: UserService,
+    private readonly userDao: UserDao,
     private readonly refreshTokenRepo: RefreshTokenRepository,
   ) {}
 
   async login(dto: LoginRequestDto) {
-    const user = await this.userService.findByUsername(dto.username);
-    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+    let user: UserEntity;
+    try {
+      user = await this.userDao.findByUsernameOfFail(dto.username);
+    } catch {
+      UserAuthException.credentialMismatch();
+    }
+
+    if (!(await bcrypt.compare(dto.password, user.password))) {
       UserAuthException.credentialMismatch();
     }
 
@@ -43,7 +50,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const user = await this.userService.findById(token.userId);
+    const user = await this.userDao.findByEmailOrFail(token.userId);
     if (!user) {
       throw new UnauthorizedException('Invalid refresh token');
     }

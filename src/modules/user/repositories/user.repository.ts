@@ -24,6 +24,10 @@ export class UserRepository {
     return this.repo.findOne({ where: { email } });
   }
 
+  async findByMobile(mobile: string): Promise<UserEntity | null> {
+    return this.repo.findOne({ where: { mobile } });
+  }
+
   async findById(id: string): Promise<UserEntity | null> {
     return this.repo.findOne({ where: { id } });
   }
