@@ -129,3 +129,8 @@
     └── e2e/                        # (Optional) โฟลเดอร์สำหรับ E2E Tests
         └── app.e2e-spec.ts
 ```
+
+คำจำกัดความ	
+core/	            ใช้สำหรับ ระบบพื้นฐานที่เกี่ยวข้องกับ การบูตระบบ, config, service หลัก, หรือ ผูกกับ infra (เช่น DB, Logger, Schedule)
+shared/	            ใช้สำหรับ Utilities / reusable components ที่ project ไหนก็ใช้ซ้ำได้เลย (pure, stateless, ไม่ผูก infra)
+shared/providers/	มักใช้กับ provider ที่เป็น generic หรือ adapter เช่น service ที่ห่อ 3rd-party API, transformer ฯลฯ
