@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { UserEntity } from '../entities/user.entity';
 import { paginate, Pagination } from 'nestjs-typeorm-paginate';
 import { PaginatedRequestInterface } from '#shared/interfaces/paginated-request.interface';
-import { DEFAULT_PAGINATION } from '#shared/constants/pagination.constant';
 
 export interface FindUserOptions extends PaginatedRequestInterface {
   email?: string;
@@ -22,6 +21,10 @@ export class UserRepository {
 
   async findByEmail(email: string): Promise<UserEntity | null> {
     return this.repo.findOne({ where: { email } });
+  }
+
+  async findByMobile(mobile: string): Promise<UserEntity | null> {
+    return this.repo.findOne({ where: { mobile } });
   }
 
   async findById(id: string): Promise<UserEntity | null> {
@@ -56,8 +59,8 @@ export class UserRepository {
       });
     }
 
-    const page = query.page ?? DEFAULT_PAGINATION.PAGE;
-    const limit = query.perPage ?? DEFAULT_PAGINATION.LIMIT;
+    const page = query.page;
+    const limit = query.perPage;
 
     return await paginate<UserEntity>(queryBuilder, {
       page,

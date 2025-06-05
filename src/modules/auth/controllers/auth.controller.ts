@@ -7,13 +7,13 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '#shared/decorators/current-user.decorator';
 import { UserEntity } from '#modules/user/entities/user.entity';
 import { UserResponseDto } from '../dtos/responses/user-response.dto';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { loginResponse } from '../swagger/login.response';
+import { AuthResponseDto } from '../dtos/responses/auth-response.dto';
+import { refreshResponse } from '../swagger/refresh-token.response';
+import { ApiResponses } from '#shared/decorators/api-response.decorator';
+import { revokeRefreshResponse } from '../swagger/refresh-token-revoke.response';
+import { meResponse } from '../swagger/me.response';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -24,32 +24,46 @@ export class AuthController {
     summary: 'Auth login',
     description: 'Login to the system',
   })
-  @ApiResponse(loginResponse)
+  @ApiResponses(loginResponse)
   @Post('login')
-  login(@Body() loginDto: LoginRequestDto) {
-    return this.authService.login(loginDto);
+  async login(@Body() loginDto: LoginRequestDto): Promise<AuthResponseDto> {
+    const result = await this.authService.login(loginDto);
+    return plainToInstance(AuthResponseDto, result);
   }
 
+  @ApiOperation({
+    summary: 'Auth login by refresh token',
+    description: 'Get new access token by refresh token',
+  })
+  @ApiResponses(refreshResponse)
   @Post('refresh')
-  refresh(@Body() refreshTokenDto: RefreshTokenRequestDto) {
-    return this.authService.refresh(refreshTokenDto.refreshToken);
+  async refresh(
+    @Body() refreshTokenDto: RefreshTokenRequestDto,
+  ): Promise<AuthResponseDto> {
+    const result = await this.authService.refresh(refreshTokenDto.refreshToken);
+    return plainToInstance(AuthResponseDto, result);
   }
 
+  @ApiOperation({
+    summary: 'Revoke refresh token',
+    description: 'Revocation refresh token',
+  })
   @ApiBearerAuth()
+  @ApiResponses(revokeRefreshResponse)
   @UseGuards(JwtAuthGuard)
   @Post('revoke')
-  revoke(
+  async revoke(
     @Body() refreshTokenDto: RefreshTokenRequestDto,
     @CurrentUser() user: UserEntity,
-  ) {
-    return this.authService.revoke(user.id, refreshTokenDto.refreshToken);
+  ): Promise<void> {
+    await this.authService.revoke(user.id, refreshTokenDto.refreshToken);
   }
 
   @ApiBearerAuth()
+  @ApiResponses(meResponse)
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@CurrentUser() user: UserEntity) {
-    console.log('Current User:', user);
     return plainToInstance(UserResponseDto, user);
   }
 }

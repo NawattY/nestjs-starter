@@ -14,6 +14,10 @@ export class UserService {
     return await this.userRepo.findByEmail(email);
   }
 
+  async findByMobile(mobile: string): Promise<UserEntity | null> {
+    return await this.userRepo.findByMobile(mobile);
+  }
+
   async findById(id: string): Promise<UserEntity | null> {
     return await this.userRepo.findById(id);
   }
@@ -22,7 +26,7 @@ export class UserService {
     if (username.includes('@')) {
       return await this.findByEmail(username);
     } else {
-      return await this.findById(username);
+      return await this.findByMobile(username);
     }
   }
 

@@ -40,7 +40,9 @@ describe('UserService', () => {
 
   it('should return paginated result in findAll', async () => {
     const repoResult = {
-      items: [{ id: '1', email: 'a', mobile: '1', fullName: 'A', isActive: true }],
+      items: [
+        { id: '1', email: 'a', mobile: '1', fullName: 'A', isActive: true },
+      ],
       meta: {
         itemCount: 1,
         totalItems: 1,

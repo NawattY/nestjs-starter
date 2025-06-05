@@ -1,8 +1,3 @@
-export interface TokenPayload {
+export interface TokenPayloadInterface {
   sub: string;
-}
-
-export interface UserAuthModel {
-  accessToken: string;
-  userId: string;
 }

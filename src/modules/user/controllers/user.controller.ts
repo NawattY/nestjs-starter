@@ -4,13 +4,9 @@ import { UserListResponseDto } from '../dtos/responses/user-list-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { UserQueryDto } from '../dtos/requests/user-query.dto';
 import { JwtAuthGuard } from '#modules/auth/guards/jwt-auth.guard';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { userListResponse } from '../swagger/user-list.response';
+import { ApiResponses } from '#shared/decorators/api-response.decorator';
 
 @ApiTags('User')
 @Controller('users')
@@ -22,7 +18,7 @@ export class UserController {
     summary: 'Get all users',
     description: 'Retrieve a list of all users in the system',
   })
-  @ApiResponse(userListResponse)
+  @ApiResponses(userListResponse)
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Query() query: UserQueryDto): Promise<UserListResponseDto> {

@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { LoginRequestDto } from '../dtos/requests/login-request.dto';
 import { UserAuthException } from '../exceptions/user-auth.exception';
 import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
+import { AuthResponseInterface } from '../interfaces/auth-response.interface';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +16,7 @@ export class AuthService {
     private readonly refreshTokenRepo: RefreshTokenRepository,
   ) {}
 
-  async login(dto: LoginRequestDto) {
+  async login(dto: LoginRequestDto): Promise<AuthResponseInterface> {
     const user = await this.userService.findByUsername(dto.username);
     if (!user || !(await bcrypt.compare(dto.password, user.password))) {
       UserAuthException.credentialMismatch();
@@ -33,35 +34,43 @@ export class AuthService {
     };
   }
 
-  async refresh(refreshToken: string) {
+  async refresh(refreshToken: string): Promise<AuthResponseInterface> {
     if (!refreshToken) {
-      throw new UnauthorizedException('Invalid refresh token');
+      UserAuthException.invalidRefreshToken();
     }
 
     const token = await this.refreshTokenRepo.findByToken(refreshToken);
     if (!token || token.revokedAt) {
-      throw new UnauthorizedException('Invalid refresh token');
+      UserAuthException.invalidRefreshToken();
     }
 
     const user = await this.userService.findById(token.userId);
     if (!user) {
-      throw new UnauthorizedException('Invalid refresh token');
+      UserAuthException.invalidRefreshToken();
     }
 
     const accessToken = this.jwtService.sign({ sub: user.id });
 
-    return { accessToken };
+    return {
+      accessToken,
+      refreshToken,
+      userId: user.id,
+    };
   }
 
   async revoke(userId: string, refreshToken: string) {
     if (!refreshToken) {
-      throw new UnauthorizedException('Invalid refresh token');
+      UserAuthException.invalidRefreshToken();
     }
+
     const token = await this.refreshTokenRepo.findByToken(refreshToken);
+
     if (!token || token.revokedAt || token.userId !== userId) {
-      throw new UnauthorizedException('Invalid refresh token');
+      UserAuthException.invalidRefreshToken();
     }
+
     await this.refreshTokenRepo.revokeToken(refreshToken);
+
     return { success: true };
   }
 }
