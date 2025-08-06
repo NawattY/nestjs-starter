@@ -5,7 +5,7 @@ import { Transform } from 'class-transformer';
 import { IsNumber, IsOptional } from 'class-validator';
 import { toInteger } from 'lodash';
 
-export class PaginateQueryDto implements PaginatedRequestInterface {
+export class PaginateRequestDto implements PaginatedRequestInterface {
   @ApiProperty({
     example: 1,
     required: false,

@@ -4,7 +4,7 @@ import { UserEntity } from '../entities/user.entity';
 import { plainToInstance } from 'class-transformer';
 import { UserResponseDto } from '../dtos/responses/user-response.dto';
 import { PaginatedResultInterface } from '#shared/interfaces/paginated-result.interface';
-import { UserQueryDto } from '../dtos/requests/user-query.dto';
+import { UserRequestDto } from '../dtos/requests/user-request.dto';
 
 @Injectable()
 export class UserService {
@@ -31,7 +31,7 @@ export class UserService {
   }
 
   async findAll(
-    query: UserQueryDto,
+    query: UserRequestDto,
   ): Promise<PaginatedResultInterface<UserResponseDto>> {
     const result = await this.userRepo.findAll(query);
 

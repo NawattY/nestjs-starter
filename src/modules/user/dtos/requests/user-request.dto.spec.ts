@@ -1,11 +1,11 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { UserQueryDto } from './user-query.dto';
+import { UserRequestDto } from './user-request.dto';
 import { DEFAULT_PAGINATION } from '#constants/pagination.constant';
 
-describe('UserQueryDto', () => {
+describe('UserRequestDto', () => {
   it('transforms values correctly', async () => {
-    const dto = plainToInstance(UserQueryDto, {
+    const dto = plainToInstance(UserRequestDto, {
       page: '-1',
       perPage: '200',
       isActive: 'true',

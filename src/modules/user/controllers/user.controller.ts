@@ -2,7 +2,7 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { UserListResponseDto } from '../dtos/responses/user-list-response.dto';
 import { plainToInstance } from 'class-transformer';
-import { UserQueryDto } from '../dtos/requests/user-query.dto';
+import { UserRequestDto } from '../dtos/requests/user-request.dto';
 import { JwtAuthGuard } from '#modules/auth/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { userListResponse } from '../swagger/user-list.response';
@@ -21,7 +21,7 @@ export class UserController {
   @ApiResponses(userListResponse)
   @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll(@Query() query: UserQueryDto): Promise<UserListResponseDto> {
+  async findAll(@Query() query: UserRequestDto): Promise<UserListResponseDto> {
     const users = await this.userService.findAll(query);
     return plainToInstance(UserListResponseDto, users);
   }
