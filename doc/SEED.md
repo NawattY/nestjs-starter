@@ -1,68 +1,85 @@
-# 🧪 Seeding Data (NestJS + TypeORM)
+# 🌱 Seeding Data (Prisma)
 
-ใช้ระบบ Seeder สำหรับใส่ข้อมูลเริ่มต้น (Initial Data) ลงในฐานข้อมูล เช่น admin user เป็นต้น
+This project uses **Prisma** for database seeding.
 
 ---
 
-## ✅ วิธีใช้งาน
+## ✅ How to Run
 
-### 1. เพิ่ม script ใน `package.json`
+The seed script is defined in `package.json`:
 
 ```json
 "scripts": {
-  "seed": "ts-node src/database/seeders/$npm_config_file"
+  "seed": "ts-node --transpile-only src/database/seed.ts"
 }
 ```
 
-> ✅ ข้อดี: ไม่ต้องแก้ package.json ทุกครั้งที่เพิ่ม seed ใหม่
+To run the seed:
+
+```bash
+npm run seed
+```
+
+Or using Prisma CLI:
+
+```bash
+npx prisma db seed
+```
 
 ---
 
-### 2. สร้าง seed file ตัวอย่าง
+## 📝 Seed File Structure
 
-**ไฟล์: `src/database/seeders/user.seeder.ts`**
+The main seed file is located at `src/database/seed.ts`.
 
 ```ts
-import { DataSource } from 'typeorm';
-import { UserEntity } from '#modules/user/entities/user.entity';
-import { hash } from 'bcryptjs';
-import ormConfig from '#database/data-source';
+// src/database/seed.ts
+import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
-export default async function seedUser() {
-  const dataSource = await ormConfig.initialize();
+const prisma = new PrismaClient();
 
-  const repo = dataSource.getRepository(UserEntity);
+async function main() {
+  const mobile = '0812345678';
+  const password = 'password123';
+  const hashed = await bcrypt.hash(password, 12);
 
-  const user = repo.create({
-    email: 'admin@example.com',
-    password: await hash('password123', 10),
-    fullName: 'Admin User',
-    isActive: true,
+  // Check existing user
+  const existing = await prisma.user.findFirst({
+    where: { mobile }
   });
 
-  await repo.save(user);
+  if (existing) {
+    console.log('User already exists:', existing.mobile);
+    return;
+  }
+
+  // Create new user
+  await prisma.user.create({
+    data: {
+      mobile,
+      password: hashed,
+      fullName: 'Admin User',
+      isActive: true,
+    },
+  });
+
   console.log('✅ Seeded user');
-  await dataSource.destroy();
 }
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
 ```
 
 ---
 
-### 3. สั่งรัน seed
+## 💡 Best Practices
 
-```bash
-npm run seed --file=user.seeder.ts
-```
-
-หรือถ้าเก็บไว้ในโฟลเดอร์ย่อย
-
-```bash
-npm run seed --file=auth/admin.seeder.ts
-```
-
----
-
-## 📝 หมายเหตุ
-
-- รองรับการเขียน seed แบบแยกตามโมดูล
-- สามารถเขียนหลาย seed และเรียกใช้แยกกันได้
+1.  **Idempotency**: Always check if data exists before creating it to avoid duplicates or errors on re-runs.
+2.  **Modular Seeding**: For large datasets, split seed logic into separate functions or files and import them into `main()`.

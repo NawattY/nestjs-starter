@@ -1,0 +1,13 @@
+# System Layers
+
+## API Layer
+Handles HTTP transport, DTO validation...
+
+## Modules Layer
+Each feature encapsulates domain boundaries...
+
+## Core Layer
+Provides global behaviors like config, logging...
+
+## Shared Layer
+Reusable utilities not tied to business...

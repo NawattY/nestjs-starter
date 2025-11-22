@@ -8,7 +8,7 @@ export abstract class PaginateResponseDto<T> {
   abstract items: T[];
 
   @Expose()
-  meta: PaginatedResultMetaInterface;
+  meta!: PaginatedResultMetaInterface;
 
   @Expose()
   links?: PaginatedResultLinkInterface;

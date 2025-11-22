@@ -1,76 +1,91 @@
-import { UserService } from '#modules/user/services/user.service';
-import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { Inject, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
-import { LoginRequestDto } from '../dtos/requests/login-request.dto';
-import { UserAuthException } from '../exceptions/user-auth.exception';
-import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
-import { AuthResponseInterface } from '../interfaces/auth-response.interface';
+import { JwtService } from '#core/auth/jwt.service';
+import { AUTH_DATASOURCE, AuthDataSource } from '../datasources/auth.datasource.interface';
+import { JwtPayload } from '../rbac/jwt-payload.interface';
+import { UserAuthEntity } from '../entities/user-auth.entity';
+import { AuthOutput } from '../models/auth.output';
+import { AuthException } from '../exceptions/auth.exception';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly jwtService: JwtService,
-    private readonly userService: UserService,
-    private readonly refreshTokenRepo: RefreshTokenRepository,
+    private readonly jwt: JwtService,
+    @Inject(AUTH_DATASOURCE)
+    private readonly ds: AuthDataSource,
   ) {}
 
-  async login(dto: LoginRequestDto): Promise<AuthResponseInterface> {
-    const user = await this.userService.findByUsername(dto.username);
-    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
-      UserAuthException.credentialMismatch();
-    }
+  async loginWithPassword(mobile: string, password: string, agent: any): Promise<AuthOutput> {
+    const user = await this.ds.findUserByMobile(mobile);
+    if (!user || !user.hasPassword) AuthException.credentialMismatch();
 
-    const payload = { sub: user.id };
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = uuidv4();
-    await this.refreshTokenRepo.createToken(user.id, refreshToken);
-
-    return {
-      accessToken,
-      refreshToken,
-      userId: user.id,
-    };
+    await this.validatePassword(user, password);
+    return this.issueSession(user.userId, agent);
   }
 
-  async refresh(refreshToken: string): Promise<AuthResponseInterface> {
-    if (!refreshToken) {
-      UserAuthException.invalidRefreshToken();
+  private async validatePassword(user: UserAuthEntity, password: string): Promise<void> {
+    if (!user.password || !await bcrypt.compare(password, user.password)) {
+      AuthException.credentialMismatch();
     }
-
-    const token = await this.refreshTokenRepo.findByToken(refreshToken);
-    if (!token || token.revokedAt) {
-      UserAuthException.invalidRefreshToken();
-    }
-
-    const user = await this.userService.findById(token.userId);
-    if (!user) {
-      UserAuthException.invalidRefreshToken();
-    }
-
-    const accessToken = this.jwtService.sign({ sub: user.id });
-
-    return {
-      accessToken,
-      refreshToken,
-      userId: user.id,
-    };
   }
 
-  async revoke(userId: string, refreshToken: string) {
-    if (!refreshToken) {
-      UserAuthException.invalidRefreshToken();
+  private async issueSession(userId: string, agent: any): Promise<AuthOutput> {
+    const sessionId = crypto.randomUUID();
+
+    const refreshToken = this.jwt.signRefresh({ sid: sessionId, uid: userId });
+    const salt = await bcrypt.genSalt();
+    const refreshHash = await bcrypt.hash(refreshToken, salt);
+
+    const newSession = await this.ds.createSession(
+      userId,
+      refreshHash,
+      sessionId,
+      agent.userAgent,
+      agent.ip,
+    );
+
+    const payload: JwtPayload = {
+      uid: userId,
+      sid: newSession.id,
+      roles: [],
+    };
+
+    const accessToken = this.jwt.signAccess(payload);
+
+    return { accessToken, refreshToken };
+  }
+
+  async refresh(refreshToken: string, agent: any): Promise<AuthOutput> {
+    let payload: any;
+
+    try {
+      payload = this.jwt.verifyRefresh(refreshToken);
+    } catch {
+      AuthException.invalidRefreshToken();
     }
 
-    const token = await this.refreshTokenRepo.findByToken(refreshToken);
+    const session = await this.ds.findSession(payload.sid);
+    if (!session || !session.isActive()) AuthException.unauthorized();
 
-    if (!token || token.revokedAt || token.userId !== userId) {
-      UserAuthException.invalidRefreshToken();
+    const ok = await bcrypt.compare(refreshToken, session.refreshTokenHash);
+    if (!ok) {
+      await this.ds.revokeSession(payload.sid);
+      AuthException.invalidRefreshToken();
     }
 
-    await this.refreshTokenRepo.revokeToken(refreshToken);
+    return this.issueSession(payload.uid, agent);
+  }
 
-    return { success: true };
+  async logout(sid: string): Promise<void> {
+    try {
+      await this.ds.revokeSession(sid);
+    } catch {}
+  }
+
+  async getUserById(id: string): Promise<UserAuthEntity> {
+    const user = await this.ds.findUserById(id);
+    if (!user || !user.hasPassword) AuthException.unauthorized();
+
+    return user;
   }
 }

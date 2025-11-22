@@ -1,0 +1,3 @@
+# Setup Environment
+
+Install Node.js LTS, Docker, PostgreSQL...
