@@ -2,17 +2,17 @@ import { Expose } from 'class-transformer';
 
 export class UserOutput {
   @Expose()
-  id!: string;
+  readonly id!: string;
 
   @Expose()
-  email?: string;
+  readonly email?: string;
 
   @Expose()
-  mobile!: string;
+  readonly mobile!: string;
 
   @Expose()
-  fullName!: string;
+  readonly fullName!: string;
 
   @Expose()
-  isActive!: boolean;
+  readonly isActive!: boolean;
 }

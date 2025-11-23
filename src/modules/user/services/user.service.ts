@@ -25,14 +25,12 @@ export class UserService {
     });
   }
 
-  async update(
-    userId: string,
-    data: UpdateUserInput,
-  ): Promise<UserOutput> {
+  async update(input: UpdateUserInput): Promise<UserOutput> {
     // 1. Business Rule Validation (Direct Prisma Access)
-    await this.userModificationRule.validate(userId);
+    await this.userModificationRule.validate(input.userId);
 
     // 2. Update Data
+    const { userId, ...data } = input;
     const user = await this.userDatasource.update(userId, data);
     
     // 3. Emit Event (Side Effect)
