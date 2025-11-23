@@ -39,9 +39,11 @@ export class AuthController {
   @ApiResponses(loginResponse)
   @Post('login')
   async login(@Body() dto: LoginRequestDto, @Req() req: Request): Promise<AuthResponseDto> {
-    const auth = await this.auth.loginWithPassword(dto.username, dto.password, {
-      userAgent: req.headers['user-agent'],
-      ip: req.ip,
+    const auth = await this.auth.loginWithPassword({
+      mobile: dto.username,
+      password: dto.password,
+      userAgent: req.headers['user-agent'] || '',
+      ip: req.ip || '',
     });
 
     return plainToInstance(AuthResponseDto, auth);
@@ -57,9 +59,10 @@ export class AuthController {
   @ApiResponses(refreshResponse)
   @Post('refresh')
   async refresh(@Body() dto: RefreshRequestDto, @Req() req: Request): Promise<AuthResponseDto> {
-    return this.auth.refresh(dto.refreshToken, {
-      userAgent: req.headers['user-agent'],
-      ip: req.ip,
+    return this.auth.refresh({
+      refreshToken: dto.refreshToken,
+      userAgent: req.headers['user-agent'] || '',
+      ip: req.ip || '',
     });
   }
 

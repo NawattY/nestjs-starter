@@ -6,6 +6,8 @@ import { JwtPayload } from '../rbac/jwt-payload.interface';
 import { UserAuthEntity } from '../entities/user-auth.entity';
 import { AuthOutput } from '../models/auth.output';
 import { AuthException } from '../exceptions/auth.exception';
+import { LoginInput } from '../models/login.input';
+import { RefreshTokenInput } from '../models/refresh-token.input';
 
 @Injectable()
 export class AuthService {
@@ -15,12 +17,12 @@ export class AuthService {
     private readonly ds: AuthDataSource,
   ) {}
 
-  async loginWithPassword(mobile: string, password: string, agent: any): Promise<AuthOutput> {
-    const user = await this.ds.findUserByMobile(mobile);
+  async loginWithPassword(input: LoginInput): Promise<AuthOutput> {
+    const user = await this.ds.findUserByMobile(input.mobile);
     if (!user || !user.hasPassword) AuthException.credentialMismatch();
 
-    await this.validatePassword(user, password);
-    return this.issueSession(user.userId, agent);
+    await this.validatePassword(user, input.password);
+    return this.issueSession(user.userId, { ip: input.ip, userAgent: input.userAgent });
   }
 
   private async validatePassword(user: UserAuthEntity, password: string): Promise<void> {
@@ -29,7 +31,7 @@ export class AuthService {
     }
   }
 
-  private async issueSession(userId: string, agent: any): Promise<AuthOutput> {
+  private async issueSession(userId: string, agent: { ip: string; userAgent: string }): Promise<AuthOutput> {
     const sessionId = crypto.randomUUID();
 
     const refreshToken = this.jwt.signRefresh({ sid: sessionId, uid: userId });
@@ -55,11 +57,11 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async refresh(refreshToken: string, agent: any): Promise<AuthOutput> {
+  async refresh(input: RefreshTokenInput): Promise<AuthOutput> {
     let payload: any;
 
     try {
-      payload = this.jwt.verifyRefresh(refreshToken);
+      payload = this.jwt.verifyRefresh(input.refreshToken);
     } catch {
       AuthException.invalidRefreshToken();
     }
@@ -67,13 +69,13 @@ export class AuthService {
     const session = await this.ds.findSession(payload.sid);
     if (!session || !session.isActive()) AuthException.unauthorized();
 
-    const ok = await bcrypt.compare(refreshToken, session.refreshTokenHash);
+    const ok = await bcrypt.compare(input.refreshToken, session.refreshTokenHash);
     if (!ok) {
       await this.ds.revokeSession(payload.sid);
       AuthException.invalidRefreshToken();
     }
 
-    return this.issueSession(payload.uid, agent);
+    return this.issueSession(payload.uid, { ip: input.ip, userAgent: input.userAgent });
   }
 
   async logout(sid: string): Promise<void> {

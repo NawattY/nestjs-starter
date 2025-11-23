@@ -45,7 +45,10 @@ export class UserController {
     @CurrentUser() user: JwtPayload,
     @Body() dto: UpdateUserRequestDto,
   ): Promise<UserResponseDto> {
-    const updated = await this.userService.update(user.uid, dto);
+    const updated = await this.userService.update({
+      userId: user.uid,
+      ...dto,
+    });
     return plainToInstance(UserResponseDto, updated, {
       excludeExtraneousValues: true,
     });
