@@ -89,6 +89,8 @@ src/
 ### 3.4 Datasource Layer
 - **Responsibility:** Encapsulate all Prisma writes and module-specific reads.
 - **Output:** Transforms Prisma Types → Domain Entities.
+- **Output:** MUST return **Domain Entities** or `PaginatedResultInterface<Entity>`.
+- **Forbidden:** NEVER return Output Models or DTOs.
 
 ---
 
@@ -265,19 +267,27 @@ it('should return user balance', async () => {
 
 **Strict Rule:** DO NOT create custom pagination logic. Use the Shared Models.
 
-### 11.1 Models
-- **Input:** Query Models MUST extend `PaginateInput` (`#shared/models/paginate.input`).
-- **Output:** Response Models MUST extend `PaginatedOutput<T>` (`#shared/models/paginate.output`).
+### 11.1 API Layer (DTOs)
+- **Request:** MUST extend `PaginateQueryDto` (`#shared/dto/paginate-query.dto`).
+- **Response:** MUST extend `PaginateResponseDto<T>` (`#shared/dto/paginate-response.dto`).
+
+### 11.2 Internal Layer (Models)
+- **Input:** MUST extend `PaginateInput` (`#shared/models/paginate.input`).
+- **Output:** MUST extend `PaginatedOutput<T>` (`#shared/models/paginate.output`).
 
 ```ts
-// ✅ CORRECT
-export class MerchantQueryInput extends PaginateInput { ... }
-export class MerchantListOutput extends PaginatedOutput<MerchantOutput> { ... }
+// ✅ API Layer
+export class UserQueryDto extends PaginateQueryDto { ... }
+export class UserListResponseDto extends PaginateResponseDto<UserResponseDto> { ... }
+
+// ✅ Internal Layer
+export class FindUsersInput extends PaginateInput { ... }
+export class UserListOutput extends PaginatedOutput<UserOutput> { ... }
 ```
 
-### 11.2 Implementation
-- **Datasource:** Use `prismaPaginate` helper from `#shared/helpers/prisma-paginate.helper`.
-- **Controller:** `PaginateQueryDto` handles default values automatically.
+### 11.3 Implementation
+- **Datasource:** Use `prismaPaginate` helper from `#shared/helpers/prisma-paginate.helper`. MUST return `PaginatedResultInterface<Entity>`.
+- **Controller:** `PaginateQueryDto` handles validation and default values automatically.
 
 ---
 

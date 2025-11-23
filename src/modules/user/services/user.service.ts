@@ -4,6 +4,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { USER_DATASOURCE, UserDatasourceInterface } from '../datasources/user.datasource.interface';
 import { UpdateUserInput } from '../models/update-user.input';
 import { UserOutput } from '../models/user.output';
+import { FindUsersInput } from '../models/find-users.input';
+import { UserListOutput } from '../models/user-list.output';
 import { UserModificationRule } from '#business/rules/user-modification.rule';
 import { UserUpdatedEvent } from '../events/user-updated.event';
 
@@ -15,6 +17,18 @@ export class UserService {
     private readonly userModificationRule: UserModificationRule,
     private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  async findAll(input: FindUsersInput): Promise<UserListOutput> {
+    const result = await this.userDatasource.findAll(input);
+    
+    const output = new UserListOutput();
+    output.items = plainToInstance(UserOutput, result.items, {
+      excludeExtraneousValues: true,
+    });
+    output.meta = result.meta;
+    
+    return output;
+  }
   
   async getById(userId: string): Promise<UserOutput | null> {
     const user = await this.userDatasource.findById(userId);
