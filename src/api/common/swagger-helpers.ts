@@ -239,4 +239,42 @@ export class SwaggerHelpers {
       },
     };
   }
+
+  /**
+   * Create a paginated response example
+   * @param items Array of item examples
+   * @param description Optional description (default: 'Success')
+   * @param page Current page (default: 1)
+   * @param perPage Items per page (default: 10)
+   * @param total Total items (default: items.length)
+   */
+  static paginated<T>(
+    items: T[],
+    description: string = 'Success',
+    page: number = 1,
+    perPage: number = 10,
+    total?: number,
+  ) {
+    const totalItems = total ?? items.length;
+    const totalPages = Math.ceil(totalItems / perPage);
+
+    const data = {
+      items,
+      meta: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: perPage,
+        totalPages,
+        currentPage: page,
+      },
+      links: {
+        first: `http://localhost:3000/api/v1/resource?page=1&perPage=${perPage}`,
+        previous: page > 1 ? `http://localhost:3000/api/v1/resource?page=${page - 1}&perPage=${perPage}` : '',
+        next: page < totalPages ? `http://localhost:3000/api/v1/resource?page=${page + 1}&perPage=${perPage}` : '',
+        last: `http://localhost:3000/api/v1/resource?page=${totalPages}&perPage=${perPage}`,
+      },
+    };
+
+    return this.success(200, data, description)
+  }
 }
