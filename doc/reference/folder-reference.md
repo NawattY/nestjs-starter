@@ -1,3 +1,0 @@
-# Folder Reference
-
-Explain each folder with real examples...

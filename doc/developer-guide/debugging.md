@@ -1,3 +1,0 @@
-# Debugging Guide
-
-Use VSCode launch.json, breakpoints, Prisma query logs...

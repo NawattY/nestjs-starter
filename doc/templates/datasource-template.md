@@ -1,3 +1,0 @@
-# Datasource Template
-
-Template specification...

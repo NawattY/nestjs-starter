@@ -1,3 +1,0 @@
-# Error Codes
-
-Mapping of error codes to messages...

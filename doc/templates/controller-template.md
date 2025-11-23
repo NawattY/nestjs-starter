@@ -1,3 +1,0 @@
-# Controller Template
-
-Template specification...

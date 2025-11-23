@@ -61,6 +61,7 @@ npm run start:dev
 ```
 src/
  ├── api/                # HTTP controllers, DTOs, Swagger (transport layer)
+ │   └── v1/             # Versioning support
  ├── modules/            # Application modules (feature-centric)
  ├── business/           # CrossBusinessModule (Shared rules & policies)
  ├── core/               # Framework & infra (auth, config, prisma, logger)
@@ -106,7 +107,7 @@ src/
   - ❌ MUST NOT import anything from `src/modules` (to avoid circular dependencies)
 - **Usage**:
   - Services inject these rules and pass data to them
-  - Rules can query DB directly via Prisma if needed
+  - Rules can query DB directly via Prisma if needed (READ-ONLY for validation)
 
 **Rules**:
 - Keep business logic here when shared across modules
@@ -234,7 +235,7 @@ export class UserListOutput {
    ```
 2. **Create API Skeleton**
    ```
-   src/api/<feature>/
+   src/api/v1/<feature>/
        controllers/
        dtos/
        swagger/
@@ -262,7 +263,7 @@ export class UserListOutput {
 ## Naming Conventions & File Rules
 
 - Modules: `src/modules/<feature>/`
-- API: `src/api/<feature>/controllers/<name>.controller.ts`
+- API: `src/api/v1/<feature>/controllers/<name>.controller.ts`
 - DTO request: `<action>.request.dto.ts` or `<action>.dto.ts`
 - DTO response: `<resource>.response.dto.ts`
 - Input Models: `<action>.input.ts`

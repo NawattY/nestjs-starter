@@ -1,3 +1,0 @@
-# Readme Template
-
-Template specification...

@@ -1,3 +1,0 @@
-# Service Template
-
-Template specification...

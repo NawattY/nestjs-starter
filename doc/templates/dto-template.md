@@ -1,3 +1,0 @@
-# Dto Template
-
-Template specification...

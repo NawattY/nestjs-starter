@@ -25,6 +25,7 @@ Infrastructure Layer (Prisma, Redis, external APIs)
 ```
 src/
  ├── api/                     # HTTP controllers (no business logic)
+ │   └── v1/                  # Versioning support
  ├── modules/                 # Feature application logic (Order, Cart, Staff)
  ├── business/                # Shared business rules (Product, Staff, User)
  ├── core/                    # Framework-level code (config, logger, prisma)
@@ -60,7 +61,8 @@ Shared business logic and policies used by multiple modules, e.g:
 - user-status.policy.ts  
 
 Allowed to use PrismaService if business rule requires DB verification  
-(Example: check product availability before ordering)
+(Example: check product availability before ordering)  
+**IMPORTANT:** Must be **READ-ONLY**. No writes allowed here.
 
 ### Infrastructure Layer (`src/core/database`)
 - PrismaService  
@@ -131,9 +133,12 @@ src/business/rules/user-deletion.rule.ts
 ## 7. Module Isolation
 
 Feature modules **must not reference each other**.
+- **Synchronous (Read/Validate):** Use `src/business` rules.
+- **Asynchronous (Side Effects):** Use **Event Emitters**.
 
 Example:  
-OrderModule needs to check user status → it calls UserStatusRule in `src/business/rules` instead of importing UserModule.
+OrderModule needs to check user status → it calls UserStatusRule in `src/business/rules`.
+OrderModule needs to notify user → it emits `order.created` event.
 
 ---
 
@@ -152,10 +157,10 @@ OrderModule needs to check user status → it calls UserStatusRule in `src/busin
 
 ## 9. Prisma Usage Rules
 
-- Modules MUST NOT use Prisma directly  
-- Business Layer MAY use Prisma  
-- Infrastructure Layer implements PrismaService  
-- Datasource (in module) can define its own Prisma adapters if needed  
+- Modules MUST NOT use Prisma directly in Services (Use Datasource Adapter)
+- Business Layer MAY use Prisma (Read-Only)
+- Infrastructure Layer implements PrismaService
+- Datasource (in module) defines Prisma adapters for Writes/Reads  
 
 ---
 

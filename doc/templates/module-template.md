@@ -1,3 +1,0 @@
-# Module Template
-
-Template specification...

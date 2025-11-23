@@ -1,3 +1,0 @@
-# Docker Compose
-
-docker-compose for local Postgres, Redis...

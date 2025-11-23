@@ -1,3 +1,0 @@
-# HTTP Status
-
-Standard response format...

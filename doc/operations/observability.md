@@ -1,3 +1,0 @@
-# Observability
-
-Metrics, logging, tracing...
