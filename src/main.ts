@@ -1,14 +1,19 @@
-import { NestFactory, Reflector } from '@nestjs/core';
-import { Logger } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { Logger, VersioningType } from '@nestjs/common';
 import { AppModule } from '#app.module';
-import { HttpExceptionFilter } from '#shared/filters/http-exception.filter';
-import { GlobalSerializerInterceptor } from '#shared/interceptors/global-serializer.interceptor';
-import { setupSwagger } from '#config/swagger.config';
 import { CoreConfigService } from '#core/config/config.service';
-import { createValidationPipe } from '#shared/pipes';
+import { createValidationPipe } from '#core/pipes';
+import helmet from 'helmet';
+import * as compression from 'compression';
+import { setupSwagger } from '#api/swagger.setup';
+import { LoggerService } from '#core/logger/services/logger.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  app.useLogger(app.get(LoggerService));
 
   const coreConfigService = app.get(CoreConfigService);
   const port = coreConfigService.getPort();
@@ -21,15 +26,32 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   // 🛡️ Optional: Enable Cors
-  app.enableCors();
+  app.enableCors({
+  // กำหนด Type อย่างชัดเจน: origin เป็น string | undefined, callback เป็น CorsCallback
+  origin: async (
+    origin: string | undefined, // Origin ของ Request (อาจเป็น undefined ถ้าไม่มี header)
+    callback: (err: Error | null, allow?: boolean) => void // Type ของ Callback
+  ) => { 
+    // 1. ถ้า Origin ไม่ถูกส่งมา (เช่น Request มาจาก Server) ให้ผ่านไป
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    const FIXED_ALLOWED = ['http://localhost:3000', 'https://api.yourdomain.com'];
+    if (FIXED_ALLOWED.includes(origin)) {
+      return true;
+    }
+  },
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, 
+});
 
-  app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(
-    new GlobalSerializerInterceptor(app.get(Reflector)),
-  );
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+  app.use(helmet());
+  app.use(compression());
 
   // ✅ เปิด ValidationPipe แบบ global
-  app.useGlobalPipes(createValidationPipe());
+  app.useGlobalPipes(createValidationPipe({ transformOptions: { enableImplicitConversion: true }}));
 
   setupSwagger(app);
 

@@ -1,21 +1,42 @@
-import { AppController } from '#app.controller';
-import { AppService } from '#app.service';
+import { ApiModule } from '#api/api.module';
+
 import { CoreConfigModule } from '#core/config/config.module';
-import { DatabaseModule } from '#core/database/database.module';
+import { CoreDatabaseModule } from '#core/database/database.module';
 import { LoggerModule } from '#core/logger/logger.module';
-import { AuthModule } from '#modules/auth/auth.module';
-import { UserModule } from '#modules/user/user.module';
+import { GlobalSerializerInterceptor } from '#core/interceptors/global-serializer.interceptor';
 import { Module } from '@nestjs/common';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { HttpExceptionFilter } from '#core/exceptions/http-exception.filter';
+import { CoreAuthModule } from '#core/auth/core-auth.module';
+import { HttpLoggerInterceptor } from '#core/logger/interceptors/http-logger.interceptor';
+import { CacheModule } from '#core/cache/cache.module';
+import { CoreEventModule } from '#core/event/core-event.module';
 
 @Module({
   imports: [
     CoreConfigModule,
-    DatabaseModule,
+    CoreDatabaseModule,
+    CacheModule,
+    CoreAuthModule,
+    CoreEventModule,
     LoggerModule,
-    UserModule,
-    AuthModule,
+    ApiModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: HttpLoggerInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: GlobalSerializerInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+
+  ],
 })
 export class AppModule {}

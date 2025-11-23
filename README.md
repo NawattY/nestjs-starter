@@ -1,233 +1,369 @@
-# NestJS Starter
+# NestJS Clean Modular Monolith — Architecture & Contributor README
 
-A robust and scalable NestJS boilerplate designed to kickstart your backend development. This boilerplate includes pre-configured modules for common tasks, a well-defined project structure, and best practices for building enterprise-grade applications.
+> **Purpose:** This README documents the architecture and contributor guidance for the NestJS Starter (“Clean Modular Monolith”) used across projects (SaaS, Automation, POS, AI-backend, etc.).  
+> It explains folder structure, conventions, development workflows, and step-by-step guidance for adding features or extracting microservices.
 
-## ✨ Key Features
+---
 
-* **NestJS Framework:** A progressive Node.js framework for building efficient, reliable, and scalable server-side applications.
-* **TypeScript:** Superset of JavaScript for type safety and better developer experience.
-* **Configuration Management:** Flexible configuration loading (`.env` files) and typed configurations using `@nestjs/config`, with a clear separation between core mechanism and project-specific settings. Includes validation for environment variables.
-* **Database Integration:**
-    * **TypeORM:** Pre-configured for database interaction.
-    * **Migrations:** Setup for database schema migrations.
-    * **Seeding:** Placeholder and structure for database seeding.
-* **Authentication & Authorization:** Basic setup for JWT-based authentication (can be extended).
-* **Logging:** Centralized logging module. You can easily extend `LoggerService` to pipe logs to Winston, CloudWatch, or any external system.
-* **Validation:** Request validation using `class-validator` and `class-transformer`.
-* **Error Handling:** Global exception filter for consistent error responses.
-* **Modularity:** Well-defined project structure promoting separation of concerns.
-* **Testing:** Setup for unit and E2E tests with Jest.
-* **API Documentation:** Automated API documentation with Swagger (OpenAPI).
+## Table of Contents
+1. [Principles & Goals](#principles--goals)  
+2. [High-level Folder Structure](#high-level-folder-structure)  
+3. [Layer Responsibilities](#layer-responsibilities)  
+4. [API / DTO / Models / Entities Guidelines](#api--dto--models--entities-guidelines)  
+5. [Datasource & Adapters Pattern](#datasource--adapters-pattern)  
+6. [Business Layer](#business-layer)  
+7. [Core Layer (Infra / Framework)](#core-layer-infra--framework)  
+8. [Auth & RBAC Patterns](#auth--rbac-patterns)  
+9. [Controller → Service → Model → Output Flow (Examples)](#controller--service--model--output-flow-examples)  
+10. [How to Add a New Module (Step-by-step)](#how-to-add-a-new-module-step-by-step)  
+11. [How to Prepare Module for Microservice Extraction](#how-to-prepare-module-for-microservice-extraction)  
+12. [Naming Conventions & File Rules](#naming-conventions--file-rules)  
+13. [Testing Strategy](#testing-strategy)  
+14. [Dev / Contribution Workflow](#dev--contribution-workflow)  
+15. [Recommended Tooling & Libraries](#recommended-tooling--libraries)  
+16. [Mermaid Diagram (Architecture Overview)](#mermaid-diagram-architecture-overview)  
+17. [FAQ & Common Pitfalls](#faq--common-pitfalls)  
+18. [Appendix: Examples / Templates](#appendix-examples--templates)
 
-## 📂 Project Structure Overview
+## Quick Start
 
-The project structure is designed to be modular, scalable, and maintainable.
+```bash
+# 1. Install dependencies
+npm install
+npm run prepare
 
-```
-.
-├── .env.example
-├── .gitignore
-├── .nvmrc
-├── .prettierrc                     # Prettier configuration
-├── eslint.config.mjs               # ESLint configuration
-├── nest-cli.json
-├── package.json
-├── package-lock.json
-├── tsconfig.build.json
-├── tsconfig.json
-├── PROJECT_STRUCTURE.md            # Additional docs
-├── doc/
-│   ├── MIGRATION.md
-│   └── SEED.md
-│
-├── src/
-│   ├── main.ts                     # Application bootstrap
-│   ├── app.module.ts               # Root application module
-│   │
-│   ├── core/
-│   │   ├── config/
-│   │   │   ├── config.module.ts
-│   │   │   ├── config.service.ts
-│   │   │   ├── validation.ts
-│   │   │   └── utils/
-│   │   │       └── validate-config.util.ts
-│   │   ├── database/
-│   │   │   └── database.module.ts
-│   │   ├── file-upload/
-│   │   │   └── s3/
-│   │   │       ├── s3.module.ts
-│   │   │       ├── s3.service.ts
-│   │   │       └── index.ts
-│   │   └── logger/
-│   │       ├── logger.module.ts
-│   │       └── services/
-│   │           └── logger.service.ts
-│   │
-│   ├── database/
-│   │   ├── data-source.ts
-│   │   ├── migrations/
-│   │   └── seeders/
-│   │
-│   ├── config/
-│   ├── constants/
-│   ├── shared/
-│   └── modules/
-│       ├── auth/
-│       └── user/
-│
-└── test/
-    ├── app.e2e-spec.ts
-    ├── auth.e2e-spec.ts
-    ├── user.e2e-spec.ts
-    └── jest-e2e.json
+# 2. Setup Environment
+cp .env.example .env
+# (Update .env with your database credentials)
+
+# 3. Database Setup
+npm run prisma:migrate
+npm run seed
+
+# 4. Run Application
+npm run start:dev
 ```
 
-* **`src/core/`**: Contains foundational modules and services essential for the boilerplate's operation (e.g., config loading mechanism, core database module setup, logger). This part should ideally change minimally when new projects are started from this boilerplate.
-* **`src/database/`**: Holds project-specific database schema definitions, migrations, seed files, and the ORM's data source configuration (`data-source.ts`) used by the CLI. This folder will evolve with the specific project.
-* **`src/config/`**: Defines project-specific typed configuration objects (using `@nestjs/config`'s `registerAs` and validated by `src/core/config/utils/validate-config.util.ts`). These are loaded by the `CoreConfigModule`.
-* **`src/constants/`**: Stores global constants that are specific to the project and used across multiple modules within this project.
-* **`src/shared/`**: Includes reusable utilities, DTOs, interfaces, decorators, filters, guards, etc., that are generic enough to be shared by multiple feature modules *within the boilerplate's typical use case*.
-* **`src/modules/`**: Houses feature-specific modules, each typically containing its own controllers, services, DTOs, entities, and constants. This is where most of the application's business logic will reside.
+---
 
-## 🚀 Getting Started
+## Principles & Goals
 
-### Prerequisites
+- **Separation of Concerns**: API layer (HTTP) is separated from Application logic and Business rules.  
+- **Modularity**: Each feature is a module that contains services, datasources, models and entities.  
+- **Testability**: Interfaces and datasources encourage mocking.  
+- **Microservice-ready**: Module boundaries are explicit to simplify future extraction.  
+- **Pragmatic Clean Architecture**: Not dogmatic DDD — practical and maintainable.
 
-* Node.js (v18.x or later recommended)
-* npm (v9.x or later) or yarn
-* Docker and Docker Compose (Optional, for containerized development/deployment)
-* A running database instance (e.g., PostgreSQL, MySQL) accessible to the application.
+---
 
-### Installation
+## High-level Folder Structure
 
-1.  **Clone the repository:**
-    ```bash
-    git clone [https://github.com/your-username/your-repo.git](https://github.com/your-username/your-repo.git) your-project-name
-    cd your-project-name
-    ```
+```
+src/
+ ├── api/                # HTTP controllers, DTOs, Swagger (transport layer)
+ │   └── v1/             # Versioning support
+ ├── modules/            # Application modules (feature-centric)
+ ├── business/           # CrossBusinessModule (Shared rules & policies)
+ ├── core/               # Framework & infra (auth, config, prisma, logger)
+ ├── shared/             # Utilities, decorators, helpers
+ ├── config/             # registerAs config factories
+ ├── constants/          # error codes, system-wide constants
+ ├── database/           # prisma schema, migrations
+ ├── main.ts
+ └── app.module.ts
+```
 
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    # or
-    yarn install
-    ```
+---
 
-### Environment Variables
+## Layer Responsibilities
 
-1.  Create a `.env` file by copying the example:
-    ```bash
-    cp .env.example .env
-    ```
-2.  Open the `.env` file and update the environment variables according to your setup (database credentials, JWT secrets, API keys, etc.). The required and optional variables are typically defined and validated via `src/core/config/validation.ts` and specific `src/config/*.config.ts` files.
-3.  Environment files are loaded in the following priority: `.env.local`, `.env.$NODE_ENV.local`, `.env.$NODE_ENV`, then `.env`. This allows you to override settings per environment while keeping sane defaults in `.env.example`.
+### API Layer (`src/api`)
+- Controllers (thin)  
+- Request DTOs (class-validator)  
+- Response DTOs (class-transformer)  
+- Swagger / OpenAPI examples  
+- Mapping DTO ↔ Application Model
 
-## 🚀 Running the Application
+**Rules**:
+- No business logic
+- No database calls
+- Use only DTOs and mapping to models
 
-* **Development Mode (with hot-reloading):**
-    ```bash
-    npm run start:dev
-    ```
-    The application will be available at `http://localhost:PORT` (where `PORT` is defined in your `.env` file, typically 3000 or 3001).
+### Application Modules (`src/modules`)
+- Services (use-case orchestration)  
+- Datasources (adapter implementations)  
+- Models (`*.input.ts`, `*.output.ts`) — application-level shapes  
+- Entities — domain objects used within module
 
-* **Watch Mode (similar to dev):**
-    ```bash
-    npm run start:watch
-    ```
+**Rules**:
+- Services should accept Models (not DTOs)
+- Services should return Entities or Output Models
+- Datasources implement datasource interfaces
 
-* **Production Mode:**
-    First, build the application:
-    ```bash
-    npm run build
-    ```
-    Then, run the compiled application:
-    ```bash
-    npm run start:prod
-    ```
+### Business Layer (`src/business`)
+- **CrossBusinessModule**: Shared business rules / policies (cross-module)
+- **Dependencies**:
+  - ✅ MAY import `PrismaService` (for direct DB access)
+  - ❌ MUST NOT import anything from `src/modules` (to avoid circular dependencies)
+- **Usage**:
+  - Services inject these rules and pass data to them
+  - Rules can query DB directly via Prisma if needed (READ-ONLY for validation)
 
-## 🧪 Testing
+**Rules**:
+- Keep business logic here when shared across modules
+- Avoid referencing API DTOs or controllers
 
-* **Run all unit tests:**
-    ```bash
-    npm run test
-    ```
+### Core Layer (`src/core`)
+- JWT service, guards, decorators (generic)  
+- PrismaService and DB connection management  
+- Logger and telemetry adapters  
+- Global exception filter, pipes, interceptors  
+- File / mailer / third-party adapters
 
-* **Run all E2E tests:**
-    Ensure your database and other external services required for E2E tests are running.
-    ```bash
-    npm run test:e2e
-    ```
-    The `test/` directory includes example E2E tests such as `user.e2e-spec.ts`. Feel free to expand these with more validation and error cases.
+**Rules**:
+- Should be stable and generic
+- Avoid placing project-specific rules here
 
-* **Run test coverage:**
-    ```bash
-    npm run test:cov
-    ```
+---
 
-## 🗃️ Database (TypeORM)
+## API / DTO / Models / Entities Guidelines
 
-This boilerplate uses TypeORM for database interactions.
+- **DTOs** (API Layer)
+  - Location: `src/api/<feature>/dtos/requests` & `.../responses`
+  - Use class-validator & class-transformer
+  - DTOs are *only* used by controllers
 
-### Configuration
+- **Models (Application Input / Output)**  
+  - Location: `src/modules/<feature>/models`
+  - File naming: `create-user.input.ts`, `user-list.output.ts`
+  - Purpose: carry data inside services and business logic
 
-* The main TypeORM CLI configuration is in `src/database/data-source.ts`. This file is used by TypeORM CLI commands for migrations and other operations. It should be configured to find your entities (typically located within feature modules like `src/modules/**/*.entity.ts`) and migration files.
-* The NestJS database connection module is in `src/core/database/database.module.ts`, which uses the configuration provided via the `CoreConfigService` and/or project-specific typed database configurations from `src/config/database.config.ts`.
-* For advanced setups (multiple connections or read replicas), consider extending `DatabaseModule` with additional configuration files and providers.
+- **Entities**
+  - Location: `src/modules/<feature>/entities`
+  - Represent domain objects (UserEntity, OrderEntity)
+  - May be simple classes or interfaces
 
-### Migrations
+- **Mapping**
+  - Controller maps DTO → Input Model
+  - Service returns Output Model / Entity
+  - Controller maps Output Model → Response DTO (plainToInstance)
 
-Migrations are managed using TypeORM CLI commands, wrapped as npm scripts in `package.json`.
+---
 
-1.  **Generate a new migration:**
-    (Replace `YourMigrationName` with a descriptive name, e.g., `CreateUsersTable`)
-    ```bash
-    npm run migration:generate --name=YourMigrationName
-    ```
-    This will create a new migration file in `src/database/migrations/`. Edit this file to define your schema changes.
+## Datasource & Adapters Pattern
 
-2.  **Run pending migrations:**
-    This applies all pending migrations to your database.
-    ```bash
-    npm run migration:run
-    ```
+- Define `interface <Feature>DataSource` under module datasources.
+- Implement adapter `*PrismaDataSource` inside datasources folder.
+- Inject datasource via DI using a token constant (e.g., `USER_DATASOURCE`).
+- This decouples services from Prisma and allows easy switch to TypeORM or external API.
 
-3.  **Revert the last applied migration:**
-    ```bash
-    npm run migration:revert
-    ```
+Example:
+```
+src/modules/user/datasources/user.datasource.interface.ts
+src/modules/user/datasources/user.prisma.datasource.ts
+```
 
-*Note: Ensure your `NODE_ENV` and `.env` file are correctly set up so that the `data-source.ts` can connect to the correct database for migration operations.*
+---
 
-### Seeding
+## Business Layer
 
-Database seeding can be handled in a few ways:
+- `src/business` stores rules used across modules:
+  - product availability checks
+  - staff permission checks
+  - booking validation rules
+- Keep these services small, pure, and testable.
 
-1.  **Simple Seed Files:** Place seed scripts or data files in `src/database/seeds/` and use a library like `typeorm-extension` or custom scripts to execute them.
-    * Example script in `package.json` (you'll need to implement `seed:run:script`):
-        ```bash
-        # npm run seed:run:script
-        ```
-2.  **Dedicated Seed Module:** For more complex seeding logic involving NestJS services and dependency injection, a `SeedModule` is provided (optional) in `src/modules/seed/`. You can create a custom NestJS CLI command or script to trigger services within this module.
-    * Example (if you implement a NestJS command for seeding):
-        ```bash
-        # node dist/main.js seed
-        ```
+---
 
-## ⚙️ Configuration Management
+## Core Layer (Infra / Framework)
 
-* **Environment Variables:** Loaded from `.env` files by `src/core/config/config.module.ts`.
-* **Core Validation:** Basic ENV variables required by the boilerplate can be validated using a Joi schema in `src/core/config/validation.ts`.
-* **Typed Configurations:** Project-specific, structured configurations are defined in `src/config/*.config.ts` using `@nestjs/config`'s `registerAs` pattern. These are validated using `class-validator` via the utility in `src/core/config/utils/validate-config.util.ts`.
-* **Environment Overrides:** You can create environment-specific files such as `.env.development` or `.env.production` to override values. The loading priority is the same as mentioned above.
-* **Accessing Config:** Use the `CoreConfigService` (from `src/core/config/config.service.ts`) or inject typed configurations directly using `@Inject(config.KEY)`.
+- `src/core/config`: CoreConfigModule, validation schema, environment loading
+- `src/core/database`: PrismaService (global), DB lifecycle hooks
+- `src/core/auth`: JwtService, JwtAuthGuard, AuthUser decorator (generic)
+- `src/core/logger`: logger provider, request logging interceptor
+- `src/core/mailer`, `src/core/file`: provider and adapter pattern
 
-## 📄 API Documentation (Swagger)
+---
 
-If Swagger is enabled (typically in `main.ts`), API documentation will be available at `/api` (or your configured path) when the application is running.
-Example: `http://localhost:PORT/api`
+## Auth & RBAC Patterns
 
-## 📜 License
+- Core-level auth utilities (token sign/verify) live in `src/core/auth`.
+- Project-specific RBAC lives in `src/modules/auth/rbac`.
+- Use a small `BaseJwtPayload` in core (minimal fields), and full `JwtPayload` in module.
+- Guards in core should only rely on base payload; module guards can cast to full payload.
 
-This project is licensed under the [MIT License](LICENSE).
+---
 
-*This README provides a comprehensive guide to the boilerplate. Remember to replace placeholders like `your-username/your-repo`, and update specific examples to match your final implementation.*
+## Controller → Service → Model → Output Flow (Examples)
+
+### Example: Get paginated users
+
+- Controller:
+  - Accepts `FindUsersDto` (API DTO)
+  - Maps to `FindUsersModel` (application input)
+  - Calls `userService.findAll(findUsersModel)`
+
+- Service:
+  - Uses datasource: `this.userDs.findMany(...)`
+  - Returns `UserListOutput` (meta + items)
+
+- Controller:
+  - Maps `UserListOutput` → `UserListResponseDto` and returns
+
+### Output model example
+```ts
+export class UserListOutput {
+  constructor(
+    public meta: { totalItems: number; itemsPerPage: number; currentPage: number; totalPages: number; },
+    public items: UserEntity[],
+  ) {}
+}
+```
+
+---
+
+## How to Add a New Module (Step-by-step)
+
+1. **Create Module Skeleton**
+   ```
+   src/modules/<feature>/
+       datasources/
+       entities/
+       models/
+       services/
+       <feature>.module.ts
+   ```
+2. **Create API Skeleton**
+   ```
+   src/api/v1/<feature>/
+       controllers/
+       dtos/
+       swagger/
+   ```
+3. **Define Datasource Interface** then implement Prisma adapter.
+4. **Write Services** — accept Input Models and return Output Models/Entities.
+5. **Add Business Rules** to `src/business` if they are reused.
+6. **Add Swagger examples and DTOs** under `src/api/<feature>`.
+7. **Register module** in `AppModule` composition root (or domain registry).
+8. **Write tests**: unit tests for business & services, integration tests for datasources, e2e for API.
+
+---
+
+## How to Prepare Module for Microservice Extraction
+
+- Ensure module has no direct imports from other modules.
+- Move project-specific `src/business` logic that the module needs into module-local utilities or publish as shared package.
+- Keep datasource adapters local to the module.
+- Replace App-level config usage with environment-driven config in the microservice.
+- Decide DB strategy (shared DB or DB per service).
+- Add event emitters for domain events (UserCreated, OrderPlaced).
+
+---
+
+## Naming Conventions & File Rules
+
+- Modules: `src/modules/<feature>/`
+- API: `src/api/v1/<feature>/controllers/<name>.controller.ts`
+- DTO request: `<action>.request.dto.ts` or `<action>.dto.ts`
+- DTO response: `<resource>.response.dto.ts`
+- Input Models: `<action>.input.ts`
+- Output Models: `<resource>.output.ts`
+- Entities: `<resource>.entity.ts`
+- Datasource interface: `<feature>.datasource.interface.ts`
+- Datasource implementation: `<feature>.prisma.datasource.ts`
+- Constants: `UPPER_SNAKE_CASE` in `src/constants`
+- Tokens for DI: `export const USER_DATASOURCE = 'UserDataSource';`
+
+---
+
+## Testing Strategy
+
+- **Unit**: business rules and pure service logic (no DB).
+- **Service Tests**: mock datasources with jasmine/ts-mockito or jest mocks.
+- **Datasource Tests**: run integration tests connecting to a test database (Docker).
+- **API e2e**: supertest + in-memory DB or ephemeral test DB.
+
+---
+
+## Dev / Contribution Workflow
+
+- Branch from `main` using `feature/<ticket>-short-desc`
+- Lint with `npm run lint`
+- Run unit tests: `npm run test`
+- Run e2e tests: `npm run test:e2e`
+- PR template: add architecture impact section if changing module boundaries
+- Keep PR small and focused on single module or purpose
+
+---
+
+## Recommended Tooling & Libraries
+
+- NestJS (latest stable)  
+- Prisma (client + schema)  
+- PostgreSQL  
+- class-validator / class-transformer  
+- Swagger (`@nestjs/swagger`)  
+- Jest for testing  
+- Docker for local dev & CI  
+- Pino or Winston for logging  
+- pnpm / npm workspaces for monorepo sharing
+
+---
+
+## Mermaid Diagram (Architecture Overview)
+
+```mermaid
+flowchart TB
+  subgraph API Layer
+    A[Controllers / DTOs]
+  end
+  subgraph Application
+    B[Modules (services, models, datasources)]
+  end
+  subgraph Business
+    C[Shared Business Rules]
+  end
+  subgraph Core
+    D[PrismaService / Auth / Logger / Config]
+  end
+
+  A --> B
+  B --> C
+  B --> D
+  C --> D
+```
+
+---
+
+## FAQ & Common Pitfalls
+
+**Q: Can services accept DTOs?**  
+A: Avoid it. Use Input Models for application-level types. DTOs belong to API layer.
+
+**Q: Where to put shared validation rule?**  
+A: `src/business` if used across modules; otherwise module-local.
+
+**Q: Where to put README & docs?**  
+A: Root `README.md` (architecture) and module README in `src/modules/<feature>/README.md` for module-specific notes.
+
+**Q: Should core contain auth-rules?**  
+A: Core contains generic JWT utilities. Project-specific RBAC belongs to `src/modules/auth/rbac`.
+
+---
+
+## Appendix: Examples & Templates
+
+(Templates included in repository under `/docs/templates` — create if missing)
+- Module skeleton
+- Datasource interface template
+- Output model examples
+- Controller → Service mapping snippets
+
+---
+
+## Contact / Ownership
+- Maintainers: `kiddeestudio` (primary)  
+- Architect: Boss (project owner)  
+- For contribution questions, open PRs or contact via project issue.
+
+---

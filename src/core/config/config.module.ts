@@ -1,10 +1,10 @@
-// src/core/config/config.module.ts
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import { CoreConfigService } from './config.service';
 import coreValidationSchema from './validation'; // Schema สำหรับ validate core ENV vars
 import appConfigs from '../../config'; // โหลด Array ของ registerAs functions จาก src/config/index.ts
 
+@Global()
 @Module({
   imports: [
     NestConfigModule.forRoot({

@@ -1,50 +1,48 @@
-import { Injectable } from '@nestjs/common';
-import { UserRepository } from '../repositories/user.repository';
-import { UserEntity } from '../entities/user.entity';
+import { Inject, Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { UserResponseDto } from '../dtos/responses/user-response.dto';
-import { PaginatedResultInterface } from '#shared/interfaces/paginated-result.interface';
-import { UserQueryDto } from '../dtos/requests/user-query.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { USER_DATASOURCE, UserDatasourceInterface } from '../datasources/user.datasource.interface';
+import { UpdateUserInput } from '../models/update-user.input';
+import { UserOutput } from '../models/user.output';
+import { UserModificationRule } from '#business/rules/user-modification.rule';
+import { UserUpdatedEvent } from '../events/user-updated.event';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepo: UserRepository) {}
-
-  async findByEmail(email: string): Promise<UserEntity | null> {
-    return await this.userRepo.findByEmail(email);
+  constructor(
+    @Inject(USER_DATASOURCE)
+    private readonly userDatasource: UserDatasourceInterface,
+    private readonly userModificationRule: UserModificationRule,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
+  
+  async getById(userId: string): Promise<UserOutput | null> {
+    const user = await this.userDatasource.findById(userId);
+    if (!user) return null;
+    
+    return plainToInstance(UserOutput, user, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findByMobile(mobile: string): Promise<UserEntity | null> {
-    return await this.userRepo.findByMobile(mobile);
-  }
+  async update(
+    userId: string,
+    data: UpdateUserInput,
+  ): Promise<UserOutput> {
+    // 1. Business Rule Validation (Direct Prisma Access)
+    await this.userModificationRule.validate(userId);
 
-  async findById(id: string): Promise<UserEntity | null> {
-    return await this.userRepo.findById(id);
-  }
+    // 2. Update Data
+    const user = await this.userDatasource.update(userId, data);
+    
+    // 3. Emit Event (Side Effect)
+    this.eventEmitter.emit(
+      'user.updated',
+      new UserUpdatedEvent(userId, data),
+    );
 
-  async findByUsername(username: string): Promise<UserEntity | null> {
-    if (username.includes('@')) {
-      return await this.findByEmail(username);
-    } else {
-      return await this.findByMobile(username);
-    }
-  }
-
-  async findAll(
-    query: UserQueryDto,
-  ): Promise<PaginatedResultInterface<UserResponseDto>> {
-    const result = await this.userRepo.findAll(query);
-
-    return {
-      items: plainToInstance(UserResponseDto, result.items),
-      meta: {
-        itemCount: result.meta.itemCount,
-        totalItems: result.meta.totalItems ?? 0,
-        itemsPerPage: result.meta.itemsPerPage,
-        totalPages: result.meta.totalPages ?? 0,
-        currentPage: result.meta.currentPage,
-      },
-      links: result.links,
-    };
+    return plainToInstance(UserOutput, user, {
+      excludeExtraneousValues: true,
+    });
   }
 }

@@ -5,15 +5,15 @@ import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 class EnvironmentVariables {
   @IsNotEmpty()
   @IsString()
-  JWT_SECRET: string;
+  JWT_ACCESS_SECRET!: string;
 
   @IsString()
   @IsOptional()
-  JWT_EXPIRES_IN: string = '3600s';
+  JWT_ACCESS_EXPIRES_IN: string = '3600s';
 
   @IsNotEmpty()
   @IsString()
-  JWT_REFRESH_SECRET: string;
+  JWT_REFRESH_SECRET!: string;
 
   @IsString()
   @IsOptional()
@@ -22,8 +22,8 @@ class EnvironmentVariables {
 
 // Export Interface เพื่อ Type Hint
 export interface AuthConfig {
-  jwtSecret: string;
-  jwtExpiresIn: string;
+  jwtAccessSecret: string;
+  jwtAccessExpiresIn: string;
   jwtRefreshSecret: string;
   jwtRefreshExpiresIn: string;
 }
@@ -32,8 +32,8 @@ export interface AuthConfig {
 export const authConfiguration = registerAs('auth', (): AuthConfig => {
   // 1. รวบรวมค่า Config ดิบจาก process.env
   const rawConfig = {
-    JWT_SECRET: process.env.JWT_SECRET,
-    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
+    JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
+    JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN,
     JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
     JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN,
   };
@@ -47,8 +47,8 @@ export const authConfiguration = registerAs('auth', (): AuthConfig => {
 
   // 3. Return ค่าที่ผ่านการ Validate และอาจจะมีการปรับแต่งเพิ่มเติม
   return {
-    jwtSecret: validatedEnv.JWT_SECRET,
-    jwtExpiresIn: validatedEnv.JWT_EXPIRES_IN,
+    jwtAccessSecret: validatedEnv.JWT_ACCESS_SECRET,
+    jwtAccessExpiresIn: validatedEnv.JWT_ACCESS_EXPIRES_IN,
     jwtRefreshSecret: validatedEnv.JWT_REFRESH_SECRET,
     jwtRefreshExpiresIn: validatedEnv.JWT_REFRESH_EXPIRES_IN,
   };

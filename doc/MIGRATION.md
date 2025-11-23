@@ -1,55 +1,59 @@
-## 📦 TypeORM Migration Commands
+# 📦 Prisma Migration Commands
 
-ชุดคำสั่งที่ใช้ในการจัดการ Migration ด้วย TypeORM และ NestJS
+This project uses **Prisma Migrate** for database schema management.
 
-> 📂 ไฟล์ migration จะถูกสร้างไว้ใน `src/database/migrations/`
-
----
-
-### 📌 สร้างไฟล์ Migration (จาก Entity ที่เปลี่ยนแปลง)
-```bash
-npm run migration:generate --name=create-user-table
-```
-> ✅ สร้างไฟล์ migration พร้อม SQL changes อัตโนมัติ
+> 📂 Migrations are stored in `src/database/migrations/`
 
 ---
 
-### 🧱 สร้างไฟล์ Migration เปล่า (เพื่อเขียน SQL เอง)
+## 📌 Create Migration (Development)
+
+When you change `schema.prisma`, run:
+
 ```bash
-npm run migration:create --name=custom-migration-name
+npm run prisma:migrate
+# OR
+npx prisma migrate dev
 ```
 
----
-
-### ▶️ รัน Migration ที่ยังไม่ถูกรัน
-```bash
-npm run migration:run
-```
+> ✅ This will:
+> 1. Generate SQL migration file
+> 2. Apply it to your local database
+> 3. Regenerate Prisma Client
 
 ---
 
-### ⏪ ย้อนกลับ Migration ล่าสุด
+## 🧱 Reset Database
+
+To wipe all data and re-apply all migrations:
+
 ```bash
-npm run migration:revert
+npx prisma migrate reset
 ```
 
 ---
 
-### 📋 แสดงรายการ Migration ที่ยังไม่ถูกรัน
+## ▶️ Deploy Migration (Production)
+
+To apply pending migrations in production (CI/CD):
+
 ```bash
-npm run migration:list
+npm run prisma:migrate:deploy
+# OR
+npx prisma migrate deploy
 ```
+
+> ⚠️ This command does **NOT** generate new migrations. It only applies existing ones.
 
 ---
 
-### 🛠 Scripts ที่ตั้งไว้ใน package.json
+## 🛠 Scripts in package.json
+
 ```json
 "scripts": {
-  "migration:generate": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d ./src/database/data-source.ts src/database/migrations/$npm_config_name",
-  "migration:create": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:create -d ./src/database/data-source.ts src/database/migrations/$npm_config_name",
-  "migration:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d ./src/database/data-source.ts",
-  "migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d ./src/database/data-source.ts",
-  "migration:list": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:show -d ./src/database/data-source.ts",
-  "seed": "ts-node -r tsconfig-paths/register src/database/seeders/$npm_config_file"
+  "prisma:generate": "prisma generate",
+  "prisma:migrate": "prisma migrate dev",
+  "prisma:migrate:deploy": "prisma migrate deploy",
+  "prisma:studio": "prisma studio"
 }
 ```
