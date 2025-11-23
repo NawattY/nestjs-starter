@@ -260,4 +260,39 @@ it('should return user balance', async () => {
 ```
 
 ---
+
+## 11) PAGINATION STANDARDS
+
+**Strict Rule:** DO NOT create custom pagination logic. Use the Shared Models.
+
+### 11.1 Models
+- **Input:** Query Models MUST extend `PaginateInput` (`#shared/models/paginate.input`).
+- **Output:** Response Models MUST extend `PaginatedOutput<T>` (`#shared/models/paginate.output`).
+
+```ts
+// ✅ CORRECT
+export class MerchantQueryInput extends PaginateInput { ... }
+export class MerchantListOutput extends PaginatedOutput<MerchantOutput> { ... }
+```
+
+### 11.2 Implementation
+- **Datasource:** Use `prismaPaginate` helper from `#shared/helpers/prisma-paginate.helper`.
+- **Controller:** `PaginateQueryDto` handles default values automatically.
+
+---
+
+## 12) AUTH & JWT RULES
+
+### 12.1 Base Payload
+- The core JWT payload is defined in `src/core/auth/jwt-base-payload.interface.ts`.
+- **Mandatory Fields:** `uid` (User ID), `sid` (Session ID).
+- **Prohibition:** AI MUST NOT modify the Base Payload shape.
+
+### 12.2 Extension Pattern
+- Modules MAY extend the base payload for domain-specific claims (e.g., Roles).
+- **Location:** `src/modules/auth/rbac/jwt-payload.interface.ts`.
+- **Rule:** Must `extend BaseJwtPayload`.
+
+---
+
 *End of Architecture Rules*
