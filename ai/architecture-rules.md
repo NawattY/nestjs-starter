@@ -305,4 +305,108 @@ export class UserListOutput extends PaginatedOutput<UserOutput> { ... }
 
 ---
 
+## 13) ENUM STRATEGY
+
+**Philosophy:** Avoid Prisma `enum` types. Use `String` columns with TypeScript enums for flexibility and easier migrations.
+
+### 13.1 Database Storage
+- **Use String Columns:** Define enum fields as `String @db.VarChar(N)` in Prisma schema.
+- **Default Values:** Use string literals (e.g., `@default("active")`).
+- **No Prisma Enums:** DO NOT use `enum` keyword in `schema.prisma`.
+
+```prisma
+// ✅ CORRECT
+model User {
+  status String @default("active") @db.VarChar(20)
+}
+
+// ❌ WRONG
+enum UserStatus { active inactive }
+model User {
+  status UserStatus @default(active)
+}
+```
+
+### 13.2 Enum Location Strategy
+- **Shared Enums** (`src/shared/enums/`): Generic enums used across **multiple modules**.
+  - Examples: `CommonStatus`, `Gender`, `Country`
+- **Module-Specific Enums** (`src/modules/{module}/enums/`): Domain-specific enums used **within one module**.
+  - Examples: `OrderStatus` (in `modules/order`), `PaymentMethod` (in `modules/payment`)
+
+### 13.3 TypeScript Enum Structure
+Each enum file MUST export:
+1. **Enum Definition** with string values
+2. **Type Alias** for type safety
+3. **Values Array** for validation
+4. **Labels Mapping** for human-readable display
+5. **Helper Function** to get labels
+
+```ts
+// ✅ CORRECT: src/shared/enums/common-status.enum.ts
+export enum CommonStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+}
+
+export type CommonStatusType = `${CommonStatus}`;
+
+export const COMMON_STATUS_VALUES = Object.values(CommonStatus);
+
+export const COMMON_STATUS_LABELS: Record<CommonStatus, string> = {
+  [CommonStatus.ACTIVE]: 'Active',
+  [CommonStatus.INACTIVE]: 'Inactive',
+  [CommonStatus.SUSPENDED]: 'Suspended',
+};
+
+export function getCommonStatusLabel(status: CommonStatus | string): string {
+  return COMMON_STATUS_LABELS[status as CommonStatus] || status;
+}
+```
+
+### 13.4 Naming Conventions
+- **Enum Keys:** `UPPER_SNAKE_CASE`
+  - Example: `WAIT_FOR_APPROVE`, `IN_PROGRESS`
+- **Database Values:** `lowercase_snake_case` (matching the enum value)
+  - Example: `'wait_for_approve'`, `'in_progress'`
+- **Label Text:** Title Case with spaces
+  - Example: `"Wait for Approve"`, `"In Progress"`
+
+### 13.5 Validation in DTOs
+Use `@IsEnum()` decorator with the TypeScript enum:
+
+```ts
+import { IsEnum } from 'class-validator';
+import { CommonStatus } from '#shared/enums';
+
+export class UpdateUserDto {
+  @IsEnum(CommonStatus, { message: 'Invalid status value' })
+  readonly status?: CommonStatus;
+}
+```
+
+### 13.6 Human-Readable Labels
+- **Always provide labels** for frontend display.
+- **Naming Pattern:**
+  - Mapping: `{ENUM_NAME}_LABELS`
+  - Function: `get{EnumName}Label()`
+- **Transform Example:** `wait_for_approve` → `"Wait for Approve"`
+
+```ts
+// Usage in Response DTO
+export class UserResponseDto {
+  status: string;
+  statusLabel: string; // Human-readable
+
+  static fromOutput(output: UserOutput): UserResponseDto {
+    return {
+      status: output.status,
+      statusLabel: getCommonStatusLabel(output.status),
+    };
+  }
+}
+```
+
+---
+
 *End of Architecture Rules*
