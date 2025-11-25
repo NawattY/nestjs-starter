@@ -3,10 +3,26 @@ import { PrismaService } from '#core/database/prisma.service';
 import { User } from '@prisma/client';
 import { UserDatasourceInterface } from './user.datasource.interface';
 import { UserEntity } from '../entities/user.entity';
+import { FindUsersInput } from '../models/find-users.input';
+import { prismaPaginate } from '#shared/helpers/prisma-paginate.helper';
+import { PaginatedResultInterface } from '#shared/interfaces/paginated-result.interface';
 
 @Injectable()
 export class UserPrismaDataSource implements UserDatasourceInterface {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findAll(input: FindUsersInput): Promise<PaginatedResultInterface<UserEntity>> {
+    const result = await prismaPaginate(this.prisma.user, {
+      page: input.page,
+      perPage: input.perPage,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      items: result.items.map((user) => this.transformUserEntity(user)),
+      meta: result.meta,
+    };
+  }
 
   async findById(id: string): Promise<UserEntity | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });

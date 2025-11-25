@@ -1,4 +1,5 @@
-import { PrismaClient, CommonStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { CommonStatus } from '../shared/enums';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -27,7 +28,7 @@ async function main() {
       mobile,
       email,
       password: hashed,
-      status: CommonStatus.active, // ⭐ ใช้ enum โดยตรง
+      status: CommonStatus.ACTIVE,
     },
   });
 

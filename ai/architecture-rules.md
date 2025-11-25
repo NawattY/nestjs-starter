@@ -15,283 +15,268 @@ flowchart TD
     Request --> API["API Layer<br/>(Controllers)"]
     API --> Module["Module Layer<br/>(Services)"]
     Module --> Business["Business Layer<br/>(Rules/Calculations)"]
-    Module --> Datasource["Datasource Layer<br/>(Prisma)"]
-    Business -.->|Read-Only| Datasource
+    Module --> Datasource["Datasource Layer<br/>(Interfaces & Impl)"]
+    Datasource -.->|Implements| DB[(Prisma/Database)]
+    Business -.->|Read-Only| DB
 ```
 
 **Hard Boundaries:**
 - **API Layer**: Entry point only. NO business logic. NO database access.
 - **Module Layer**: Logic for *one* specific domain. NO direct imports of other Modules.
 - **Business Layer**: Cross-domain rules & calculations. **READ-ONLY** database access allowed.
-- **Datasource Layer**: The **primary** place for database interaction (Writes/Reads).
+- **Datasource Layer**: The **primary** place for database interaction (Writes/Reads). MUST use Interface-based Dependency Injection.
 
 ---
 
-## 2) FOLDER STRUCTURE & GENERATION RULES
+## 2) FOLDER STRUCTURE
 
 **Rule for AI:** When asked to create a new feature (e.g., "User"), you **MUST** generate files in **BOTH** `src/api` and `src/modules` simultaneously.
 
 ```text
 src/
 ├── api/                          # HTTP Layer (Controllers, DTOs, Swagger)
-│   └── v1/
-│       └── {module}/
-│           ├── controllers/
-│           ├── dtos/
-│           │   ├── requests/
-│           │   └── responses/
-│           └── swagger/          # Swagger response definitions
-│
-├── modules/                      # Domain Layer (Services, Models, Logic)
+│   └── v1/{module}/
+│       ├── controllers/
+│       ├── dtos/requests|responses/
+│       └── swagger/
+├── modules/                      # Domain Layer
 │   └── {module}/
-│       ├── models/               # Domain Models (Input/Output) - NOT DTOs
+│       ├── models/               # Input/Output Models
 │       ├── services/
-│       ├── datasources/          # Prisma usage for this module
-│       └── entities/             # (Optional) Rich domain entities
-│
+│       ├── datasources/
+│       │   ├── {module}.datasource.interface.ts
+│       │   └── {module}.prisma.datasource.ts
+│       └── entities/
 ├── business/                     # Cross-Module Logic
-│   ├── rules/                    # Specific business rules
+│   ├── rules/
 │   └── {domain}/
-│
-├── core/                         # Infrastructure (Auth, Config, Logger, Database)
-│   └── database/
-│       └── prisma.service.ts
-└── ...
+└── core/                         # Infrastructure
 
-**Path Aliases:**
-- You **MUST** use path aliases defined in `tsconfig.json` (e.g., `#modules`, `#core`, `#business`) instead of relative paths like `../../`.
+**Path Aliases:** Use `#modules`, `#core`, `#business` instead of relative paths.
 ```
 
 ---
 
-## 3) LAYER RULES & INTER-COMMUNICATION
+## 3) LAYER RULES
 
 ### 3.1 API Layer
-- **Responsibility:** Orchestration, DTO Validation, Swagger Doc.
+- **Responsibility:** Orchestration, DTO Validation, Swagger.
 - **Forbidden:** Logic implementation, DB access.
 
 ### 3.2 Module Layer (Services)
 - **Responsibility:** Implement use-cases for *its own* domain.
+- **Injection:** MUST use `@Inject(TOKEN)` with Interface.
 - **Forbidden:**
-  - ❌ Importing other Modules (e.g., `UserModule` cannot import `OrderModule`).
-  - ❌ Using DTOs (Must use Models).
-  - ❌ Returning Entities directly (Must return Output Models).
+  - ❌ Importing other Modules.
+  - ❌ Importing `PrismaService` or Concrete Datasource Classes.
+  - ❌ Using DTOs (use Models). Returning Entities (use Output Models).
 
-### 3.3 Business Layer (The "Glue")
-- **Responsibility:** Shared logic, complex validations, and cross-domain calculations.
-- **Prisma Usage:** ✅ **ALLOWED** but with strict restrictions:
-  1.  **Read-Only:** MUST NOT perform writes (create/update/delete).
-  2.  **Validation Only:** Data fetching for API responses is FORBIDDEN. Use it only for internal logic/validation checks.
-  3.  **No Transactions:** MUST NOT initiate Prisma transactions.
-  4.  **Direct Access:** May use `PrismaService` to query data required for logic.
-- **Return Values:** Can return Booleans (validations) or Data (calculations).
+```ts
+// ✅ CORRECT
+constructor(@Inject(USER_DATASOURCE) private readonly userDatasource: UserDatasource) {}
+
+// ❌ WRONG: Direct injection
+constructor(private readonly prisma: PrismaService) {}
+constructor(private readonly userDatasource: UserPrismaDatasource) {}
+```
+
+### 3.3 Business Layer
+- **Responsibility:** Shared logic, validations, cross-domain calculations.
+- **Prisma Usage:** ✅ Read-Only queries allowed. ❌ NO writes, NO transactions.
 
 ### 3.4 Datasource Layer
-- **Responsibility:** Encapsulate all Prisma writes and module-specific reads.
-- **Output:** Transforms Prisma Types → Domain Entities.
+- **Responsibility:** Encapsulate database operations and transformation.
+- **Pattern:** Interface + Implementation (Dependency Inversion).
+- **Output:** Domain Entities or `PaginatedResultInterface<Entity>`.
+
+**Required Files:**
+```ts
+// {module}.datasource.interface.ts
+export const USER_DATASOURCE = Symbol('USER_DATASOURCE');
+export interface UserDatasource {
+  findById(id: string): Promise<UserEntity | null>;
+  create(data: CreateUserData): Promise<UserEntity>;
+}
+
+// {module}.prisma.datasource.ts
+@Injectable()
+export class UserPrismaDatasource implements UserDatasource {
+  constructor(private readonly prisma: PrismaService) {}
+  
+  async findById(id: string): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    return user ? this.transformEntity(user) : null;
+  }
+  
+  private transformEntity(prisma: User): UserEntity {
+    return new UserEntity({ id: prisma.id, email: prisma.email });
+  }
+}
+
+// {module}.module.ts
+@Module({
+  providers: [
+    UserService,
+    { provide: USER_DATASOURCE, useClass: UserPrismaDatasource },
+  ],
+  exports: [USER_DATASOURCE],
+})
+export class UserModule {}
+```
+
+**Key Rules:**
+- ✅ Define `Symbol` token for DI.
+- ✅ MUST have `private transformEntity()` method.
+- ❌ NEVER return Prisma types to services.
 
 ---
 
 ## 4) MODELS vs DTO vs ENTITY
 
-**AI MUST distinguish between these three types:**
+| Type | Location | Purpose |
+| :--- | :--- | :--- |
+| **DTO** | `api/.../dtos` | HTTP Contract (Class-Validator) |
+| **Model** | `modules/.../models` | Service Input/Output |
+| **Entity** | `modules/.../entities` | Rich Domain Object |
 
-| Type | Suffix | Location | Purpose |
-| :--- | :--- | :--- | :--- |
-| **DTO** | `.dto.ts` | `api/.../dtos` | HTTP Contract (Class-Validator) |
-| **Model** | `.input.ts`<br>`.output.ts` | `modules/.../models` | Service Input/Output (Plain Objects) |
-| **Entity** | `.entity.ts` | `modules/.../entities` | Rich Domain Object (Internal) |
+**Mapping Flow:**
+1. Controller: DTO → Input Model
+2. Service: Input Model → Entity
+3. Datasource: Prisma → Entity (via `transformEntity`)
+4. Service: Entity → Output Model (via `plainToInstance`)
+5. Controller: Output Model → Response DTO
 
-**Mapping Flow (MANDATORY):**
-1. `Controller`: DTO → Input Model
-2. `Service`: Input Model → (Logic) → Entity
-3. `Datasource`: Prisma Type → Entity
-4. `Service`: Entity → Output Model (using `plainToInstance`)
-5. `Controller`: Output Model → Response DTO
-
-**Strict Rule:**
-- Services **NEVER** see DTOs.
-- Controllers **NEVER** see Entities.
+**Strict Rules:**
+- Services NEVER see DTOs.
+- Controllers NEVER see Entities.
 
 ---
 
-## 5) CROSS-MODULE COMMUNICATION STRATEGY
+## 5) CROSS-MODULE COMMUNICATION
 
-Since `Module A` cannot import `Module B` to avoid circular dependencies:
-
-**Scenario A: Validation / Read Check (Synchronous)**
-- Use **Business Layer**.
-- *Example:* `OrderService` needs to check `Product` stock.
-- *Solution:* Inject `StockAvailabilityRule` (from `src/business/rules`) into `OrderService`. The Rule queries Prisma directly (Read-Only).
+**Scenario A: Validation / Read (Synchronous)**
+- Use **Business Layer** (e.g., inject `StockAvailabilityRule`).
 
 **Scenario B: Side Effect / Write (Asynchronous)**
 - Use **Event Emitter**.
-- **Naming Convention:** `domain.entity.action` (past tense).
-  - *Examples:* `user.password.changed`, `order.payment.completed`.
-- *Example:* After `Order` is created, notify `NotificationModule`.
-- *Solution:* `OrderService` emits `order.created`. `NotificationListener` listens and handles it.
+- Naming: `domain.entity.action` (past tense).
+  - Examples: `user.password.changed`, `order.payment.completed`.
 
 ---
 
 ## 6) ERROR HANDLING
 
-- **Define Errors:** In `src/constants/error-code.constant.ts` & `error-message.constant.ts`.
-- **Throw Errors:** Use Module-specific Exceptions (e.g., `UserException.notFound()`).
-- **Forbidden:** Do not throw generic `Error` or NestJS `HttpException` directly in services.
+- **Define:** In `src/constants/error-code.constant.ts` & `error-message.constant.ts`.
+- **Throw:** Use module-specific exceptions (e.g., `UserException.notFound()`).
+- **Forbidden:** Generic `Error` or `HttpException` in services.
 
 ---
 
-## 7) SWAGGER RULES
+## 7) SWAGGER
 
-- **Separate Files:** Responses MUST be defined in `api/.../swagger/{name}.response.ts`.
-- **Helpers:** Use `SwaggerHelpers` for standard responses.
-  - Available methods: `.success()`, `.created()`, `.noContent()`, `.notFound()`, `.unauthorized()`, `.forbidden()`, `.badRequest()`.
-  - Check `src/shared/swagger/swagger.helpers.ts` for the full list.
-- **Controller:** Link using `@ApiResponses(createMerchantResponse)`.
+- **Files:** Responses in `api/.../swagger/{name}.response.ts`.
+- **Helpers:** Use `SwaggerHelpers` (check `src/shared/swagger/swagger.helpers.ts`).
+- **Link:** `@ApiResponses(createMerchantResponse)`.
 
 ---
 
-## 8) PRISMA GUIDELINES
+## 8) AI CODING CHECKLIST
 
-- **Location:** Prisma Client usage is restricted to:
-  1. `src/modules/*/datasources/*.datasource.ts` (Writes & Reads)
-  2. `src/business/**/*` (**Read-Only** queries)
-- **Service Injection:** NEVER inject `PrismaService` into a `Service`. Inject the `Datasource` or `BusinessRule` instead.
+Before generating code:
 
----
-
-## 9) AI CODING CHECKLIST
-
-Before generating code, verify:
-
-1.  [ ] **Layer Check:** Am I putting logic in Controller? (Stop. Move to Service).
-2.  [ ] **DB Access Check:** Am I writing to DB in Business Layer? (Stop. Move to Datasource).
-3.  [ ] **Type Check:** Am I passing DTOs to Service? (Stop. Create an Input Model).
-4.  [ ] **Return Check:** Am I returning a raw Prisma object? (Stop. Map to Output Model).
-5.  [ ] **Swagger Check:** Did I create a separate Swagger response file?
-6.  [ ] **File Structure:** Did I create files in both `src/api` and `src/modules`?
+1. [ ] **Layer Check:** Logic in Controller? → Move to Service.
+2. [ ] **DB Access:** Writing in Business Layer? → Move to Datasource.
+3. [ ] **Injection:** Injecting concrete class? → Use Interface + `@Inject(TOKEN)`.
+4. [ ] **Types:** Passing DTOs to Service? → Use Input Model.
+5. [ ] **Return:** Returning Prisma object? → Map to Output Model.
+6. [ ] **Swagger:** Created separate response file?
+7. [ ] **Structure:** Created files in both `src/api` and `src/modules`?
 
 ---
 
-## 10) CODING STANDARDS & STYLE (MICRO-RULES)
+## 9) PAGINATION
 
-AI must follow these coding styles to ensure readability and maintainability.
+**Strict Rule:** Use shared models only.
 
-### 10.1 Immutability & Variables
-- **Prefer `const`:** Use `let` only when reassignment is strictly necessary.
-- **Readonly Models:** All properties in DTOs, Input Models, and Output Models MUST be `readonly`.
-- **No Magic Numbers:** Define constants for all numbers/strings used in logic.
-
-```ts
-// ✅ CORRECT
-export class CreateUserDto {
-  readonly email: string;
-  readonly age: number;
-}
-
-// ❌ WRONG
-export class CreateUserDto {
-  email: string;
-  age: number;
-}
-```
-
-### 10.2 Function Structure (RO-RO Pattern)
-- **Receive Object:** If a function takes more than 2 arguments, strictly use a dedicated Input Model / Object.
-- **Return Object:** Always return a typed object or specific Output Model.
-- **Max Parameters:** Public methods should clearly name their inputs via interface/class.
+- **API Layer:** Extend `PaginateQueryDto` and `PaginateResponseDto<T>`.
+- **Internal Layer:** Extend `PaginateInput` and `PaginatedOutput<T>`.
+- **Datasource:** Use `prismaPaginate` helper. Returns `PaginatedResultInterface<Entity>`.
 
 ```ts
-// ✅ CORRECT
-async createUser(input: CreateUserInput): Promise<UserOutput> { ... }
+// API
+export class UserQueryDto extends PaginateQueryDto {}
+export class UserListResponseDto extends PaginateResponseDto<UserResponseDto> {}
 
-// ❌ WRONG
-async createUser(email: string, age: number, name: string): Promise<UserOutput> { ... }
-```
-
-### 10.3 Control Flow (Early Returns)
-- **Avoid Nesting:** Use "Guard Clauses" to handle errors or edge cases early.
-- **Happy Path Last:** The main logic should be at the lowest indentation level at the end of the function.
-
-```ts
-// ✅ CORRECT
-if (!user) throw UserException.notFound();
-if (user.isActive) throw UserException.alreadyActive();
-
-// ... process logic ...
-return result;
-
-// ❌ WRONG
-if (user) {
-  if (!user.isActive) {
-     // ... process logic ...
-     return result;
-  } else {
-     throw UserException.alreadyActive();
-  }
-} else {
-  throw UserException.notFound();
-}
-```
-
-### 10.4 Naming Conventions
-- **Booleans:** Must start with a verb (`isActive`, `hasPermission`, `canDelete`).
-- **Functions:** Must start with a verb (`create`, `find`, `update`, `calculate`).
-- **Variables:** `camelCase`.
-- **Classes/Interfaces:** `PascalCase`.
-
-### 10.5 Testing Standards (AAA Pattern)
-All unit tests MUST follow the **Arrange-Act-Assert** pattern strictly.
-
-```ts
-it('should return user balance', async () => {
-  // 1. Arrange (Prepare data/mocks)
-  const userId = '123';
-  const mockUser = { id: userId, balance: 100 };
-  jest.spyOn(datasource, 'findById').mockResolvedValue(mockUser);
-
-  // 2. Act (Execute the method)
-  const result = await service.getBalance(userId);
-
-  // 3. Assert (Verify results)
-  expect(result).toEqual(100);
-  expect(datasource.findById).toHaveBeenCalledWith(userId);
-});
+// Internal
+export class FindUsersInput extends PaginateInput {}
+export class UserListOutput extends PaginatedOutput<UserOutput> {}
 ```
 
 ---
 
-## 11) PAGINATION STANDARDS
+## 10) AUTH & JWT
 
-**Strict Rule:** DO NOT create custom pagination logic. Use the Shared Models.
-
-### 11.1 Models
-- **Input:** Query Models MUST extend `PaginateInput` (`#shared/models/paginate.input`).
-- **Output:** Response Models MUST extend `PaginatedOutput<T>` (`#shared/models/paginate.output`).
-
-```ts
-// ✅ CORRECT
-export class MerchantQueryInput extends PaginateInput { ... }
-export class MerchantListOutput extends PaginatedOutput<MerchantOutput> { ... }
-```
-
-### 11.2 Implementation
-- **Datasource:** Use `prismaPaginate` helper from `#shared/helpers/prisma-paginate.helper`.
-- **Controller:** `PaginateQueryDto` handles default values automatically.
-
----
-
-## 12) AUTH & JWT RULES
-
-### 12.1 Base Payload
-- The core JWT payload is defined in `src/core/auth/jwt-base-payload.interface.ts`.
+- **Base Payload:** Defined in `src/core/auth/jwt-base-payload.interface.ts`.
 - **Mandatory Fields:** `uid` (User ID), `sid` (Session ID).
-- **Prohibition:** AI MUST NOT modify the Base Payload shape.
+- **Extension:** Modules MAY extend via `src/modules/auth/rbac/jwt-payload.interface.ts`.
+- **Prohibition:** MUST NOT modify Base Payload shape.
 
-### 12.2 Extension Pattern
-- Modules MAY extend the base payload for domain-specific claims (e.g., Roles).
-- **Location:** `src/modules/auth/rbac/jwt-payload.interface.ts`.
-- **Rule:** Must `extend BaseJwtPayload`.
+---
+
+## 11) ENUM STRATEGY
+
+**Philosophy:** Avoid Prisma enums. Use `String` columns with TypeScript enums.
+
+### Database
+```prisma
+// ✅ CORRECT
+model User {
+  status String @default("active") @db.VarChar(20)
+}
+
+// ❌ WRONG
+enum UserStatus { active inactive }
+```
+
+### TypeScript
+```ts
+export enum CommonStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+}
+
+export type CommonStatusType = `${CommonStatus}`;
+export const COMMON_STATUS_VALUES = Object.values(CommonStatus);
+```
+
+### Location Strategy
+- **Shared Enums:** `src/shared/enums/` (multi-module usage).
+- **Module Enums:** `src/modules/{module}/enums/` (single-module usage).
+
+### Naming
+- **Enum Keys:** `UPPER_SNAKE_CASE` (e.g., `WAIT_FOR_APPROVE`)
+- **DB Values:** `lowercase_snake_case` (e.g., `'wait_for_approve'`)
+- **Labels:** Title Case (e.g., `"Wait for Approve"`)
+
+### Validation
+```ts
+export class UpdateUserDto {
+  @IsEnum(CommonStatus, { message: 'Invalid status' })
+  readonly status?: CommonStatus;
+}
+```
+
+---
+
+## 12) CODING STANDARDS
+
+**Reference:** See `ai/coding-standards.md` for detailed style guide.
+
+**Quick Rules:**
+- Prefer `const`, use `readonly` in models.
+- Functions: RO-RO pattern (Receive Object, Return Object).
+- Control Flow: Early returns, avoid nesting.
+- Testing: AAA pattern (Arrange-Act-Assert).
 
 ---
 
