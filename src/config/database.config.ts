@@ -13,9 +13,13 @@ export interface PrismaDatabaseConfig {
 }
 
 export const databaseConfiguration = registerAs('database', (): PrismaDatabaseConfig => {
+  const rawConfig = {
+    DATABASE_URL: process.env.DATABASE_URL,
+  };
+
   const validated = validateAndTransformConfig(
     EnvironmentVariables,
-    process.env,
+    rawConfig,
     'Database Config',
   );
 

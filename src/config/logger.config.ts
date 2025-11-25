@@ -19,9 +19,14 @@ export interface LoggerConfig {
 }
 
 export const loggerConfiguration = registerAs('logger', (): LoggerConfig => {
+  const rawConfig = {
+    LOG_LEVEL: process.env.LOG_LEVEL ?? 'debug',
+    LOG_PRETTY: process.env.LOG_PRETTY ?? 'true',
+  };
+
   const validated = validateAndTransformConfig(
     EnvironmentVariables,
-    process.env,
+    rawConfig,
     'Logger Config',
   );
 
