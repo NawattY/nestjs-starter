@@ -15,15 +15,16 @@ flowchart TD
     Request --> API["API Layer<br/>(Controllers)"]
     API --> Module["Module Layer<br/>(Services)"]
     Module --> Business["Business Layer<br/>(Rules/Calculations)"]
-    Module --> Datasource["Datasource Layer<br/>(Prisma)"]
-    Business -.->|Read-Only| Datasource
+    Module --> Datasource["Datasource Layer<br/>(Interfaces & Impl)"]
+    Datasource -.->|Implements| DB[(Prisma/Database)]
+    Business -.->|Read-Only| DB
 ```
 
 **Hard Boundaries:**
 - **API Layer**: Entry point only. NO business logic. NO database access.
 - **Module Layer**: Logic for *one* specific domain. NO direct imports of other Modules.
 - **Business Layer**: Cross-domain rules & calculations. **READ-ONLY** database access allowed.
-- **Datasource Layer**: The **primary** place for database interaction (Writes/Reads).
+- **Datasource Layer**: The **primary** place for database interaction (Writes/Reads). MUST use Interface-based Dependency Injection.
 
 ---
 
@@ -46,8 +47,10 @@ src/
 │   └── {module}/
 │       ├── models/               # Domain Models (Input/Output) - NOT DTOs
 │       ├── services/
-│       ├── datasources/          # Prisma usage for this module
-│       └── entities/             # (Optional) Rich domain entities
+│       ├── datasources/          # Datasource Layer
+│       │   ├── {module}.datasource.interface.ts  # Interface & Token
+│       │   └── {module}.prisma.datasource.ts     # Implementation
+│       └── entities/             # Rich domain entities
 │
 ├── business/                     # Cross-Module Logic
 │   ├── rules/                    # Specific business rules
@@ -59,7 +62,7 @@ src/
 └── ...
 
 **Path Aliases:**
-- You **MUST** use path aliases defined in `tsconfig.json` (e.g., `#modules`, `#core`, `#business`) instead of relative paths like `../../`.
+- You **MUST** use path aliases defined in `tsconfig.json` (e.g., `#modules`, `#core`, `#business`) instead of relative paths.
 ```
 
 ---
@@ -72,10 +75,30 @@ src/
 
 ### 3.2 Module Layer (Services)
 - **Responsibility:** Implement use-cases for *its own* domain.
+- **Injection:** MUST inject Datasources using `@Inject(TOKEN)` and the **Interface**.
 - **Forbidden:**
   - ❌ Importing other Modules (e.g., `UserModule` cannot import `OrderModule`).
+  - ❌ Importing `PrismaService` directly.
+  - ❌ Importing Concrete Datasource Classes (e.g., `UserPrismaDatasource`).
   - ❌ Using DTOs (Must use Models).
   - ❌ Returning Entities directly (Must return Output Models).
+
+```ts
+// ✅ CORRECT
+constructor(
+  @Inject(USER_DATASOURCE) private readonly userDatasource: UserDatasource,
+) {}
+
+// ❌ WRONG
+constructor(
+  private readonly prisma: PrismaService, // Never inject Prisma directly
+) {}
+
+// ❌ WRONG
+constructor(
+  private readonly userDatasource: UserPrismaDatasource, // Never inject concrete class
+) {}
+```
 
 ### 3.3 Business Layer (The "Glue")
 - **Responsibility:** Shared logic, complex validations, and cross-domain calculations.
@@ -87,10 +110,63 @@ src/
 - **Return Values:** Can return Booleans (validations) or Data (calculations).
 
 ### 3.4 Datasource Layer
-- **Responsibility:** Encapsulate all Prisma writes and module-specific reads.
-- **Output:** Transforms Prisma Types → Domain Entities.
+- **Responsibility:** Encapsulate database operations and data transformation.
+- **Pattern:** MUST use Interface + Implementation (Dependency Inversion).
 - **Output:** MUST return **Domain Entities** or `PaginatedResultInterface<Entity>`.
-- **Forbidden:** NEVER return Output Models or DTOs.
+
+**Required Files:**
+
+```text
+modules/{module}/datasources/
+├── {module}.datasource.interface.ts   → Interface + Token
+└── {module}.prisma.datasource.ts      → Implementation
+```
+
+**Structure Example:**
+
+```ts
+// 1️⃣ Interface + Token Definition
+// user.datasource.interface.ts
+export const USER_DATASOURCE = Symbol('USER_DATASOURCE');
+
+export interface UserDatasource {
+  findById(id: string): Promise<UserEntity | null>;
+  create(data: CreateUserData): Promise<UserEntity>;
+  findManyPaginated(input: FindUsersInput): Promise<PaginatedResultInterface<UserEntity>>;
+}
+
+// 2️⃣ Implementation
+// user.prisma.datasource.ts
+@Injectable()
+export class UserPrismaDatasource implements UserDatasource {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findById(id: string): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    return user ? this.transformEntity(user) : null;
+  }
+
+  async create(data: CreateUserData): Promise<UserEntity> {
+    const user = await this.prisma.user.create({ data });
+    return this.transformEntity(user);
+  }
+
+  // 🔹 REQUIRED: Transform Prisma types to Domain Entities
+  private transformEntity(prisma: User): UserEntity {
+    return new UserEntity({
+      id: prisma.id,
+      email: prisma.email,
+      // ... map all fields
+    });
+  }
+}
+```
+
+**Key Rules:**
+- ✅ MUST define a `Symbol` token for dependency injection.
+- ✅ MUST implement the interface in a separate file.
+- ✅ MUST have a `private transformEntity()` method for mapping.
+- ❌ NEVER return Prisma types directly to services.
 
 ---
 
@@ -107,7 +183,7 @@ src/
 **Mapping Flow (MANDATORY):**
 1. `Controller`: DTO → Input Model
 2. `Service`: Input Model → (Logic) → Entity
-3. `Datasource`: Prisma Type → Entity
+3. `Datasource`: Prisma Type → Entity (via private transform method)
 4. `Service`: Entity → Output Model (using `plainToInstance`)
 5. `Controller`: Output Model → Response DTO
 
@@ -147,18 +223,80 @@ Since `Module A` cannot import `Module B` to avoid circular dependencies:
 
 - **Separate Files:** Responses MUST be defined in `api/.../swagger/{name}.response.ts`.
 - **Helpers:** Use `SwaggerHelpers` for standard responses.
-  - Available methods: `.success()`, `.created()`, `.noContent()`, `.notFound()`, `.unauthorized()`, `.forbidden()`, `.badRequest()`.
-  - Check `src/shared/swagger/swagger.helpers.ts` for the full list.
+  - Check `src/shared/swagger/swagger.helpers.ts` for available methods.
 - **Controller:** Link using `@ApiResponses(createMerchantResponse)`.
 
 ---
 
-## 8) PRISMA GUIDELINES
+## 8) PRISMA USAGE \& INJECTION RULES
 
-- **Location:** Prisma Client usage is restricted to:
-  1. `src/modules/*/datasources/*.datasource.ts` (Writes & Reads)
-  2. `src/business/**/*` (**Read-Only** queries)
-- **Service Injection:** NEVER inject `PrismaService` into a `Service`. Inject the `Datasource` or `BusinessRule` instead.
+### 8.1 Where Prisma Can Be Used
+- **Datasource Layer** (`src/modules/*/datasources/*.prisma.datasource.ts`):
+  - ✅ Full CRUD operations (Create, Read, Update, Delete)
+  - ✅ Transactions, aggregations, complex queries
+- **Business Layer** (`src/business/**/*`):
+  - ✅ **Read-Only** queries for validations and calculations
+  - ❌ NO writes, NO transactions
+
+### 8.2 Service Layer Injection (STRICT)
+Services MUST inject **Datasource Interface** via token, NOT `PrismaService` or concrete classes.
+
+```ts
+// ✅ CORRECT: Inject via Interface + Token
+export class UserService {
+  constructor(
+    @Inject(USER_DATASOURCE) private readonly userDatasource: UserDatasource,
+  ) {}
+}
+
+// ❌ WRONG: Direct PrismaService injection
+export class UserService {
+  constructor(
+    private readonly prisma: PrismaService, // FORBIDDEN
+  ) {}
+}
+
+// ❌ WRONG: Concrete class injection
+export class UserService {
+  constructor(
+    private readonly userDatasource: UserPrismaDatasource, // FORBIDDEN
+  ) {}
+}
+```
+
+### 8.3 Module Registration Pattern
+Register datasource implementations using provider tokens in the module.
+
+```ts
+// ✅ CORRECT: user.module.ts
+@Module({
+  providers: [
+    UserService,
+    {
+      provide: USER_DATASOURCE,
+      useClass: UserPrismaDatasource,
+    },
+  ],
+  exports: [USER_DATASOURCE], // Export if other modules need it
+})
+export class UserModule {}
+```
+
+### 8.4 Business Layer Direct Access
+Business rules MAY inject `PrismaService` directly for read-only operations.
+
+```ts
+// ✅ ALLOWED: Business Rule with read-only Prisma access
+@Injectable()
+export class UserModificationRule {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async canModifyUser(userId: string, modifierId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    return user.createdBy === modifierId;
+  }
+}
+```
 
 ---
 
@@ -168,10 +306,11 @@ Before generating code, verify:
 
 1.  [ ] **Layer Check:** Am I putting logic in Controller? (Stop. Move to Service).
 2.  [ ] **DB Access Check:** Am I writing to DB in Business Layer? (Stop. Move to Datasource).
-3.  [ ] **Type Check:** Am I passing DTOs to Service? (Stop. Create an Input Model).
-4.  [ ] **Return Check:** Am I returning a raw Prisma object? (Stop. Map to Output Model).
-5.  [ ] **Swagger Check:** Did I create a separate Swagger response file?
-6.  [ ] **File Structure:** Did I create files in both `src/api` and `src/modules`?
+3.  [ ] **Injection Check:** Am I injecting a concrete Datasource class? (Stop. Use Interface + @Inject(TOKEN)).
+4.  [ ] **Type Check:** Am I passing DTOs to Service? (Stop. Create an Input Model).
+5.  [ ] **Return Check:** Am I returning a raw Prisma object? (Stop. Map to Output Model).
+6.  [ ] **Swagger Check:** Did I create a separate Swagger response file?
+7.  [ ] **File Structure:** Did I create files in both `src/api` and `src/modules`?
 
 ---
 
