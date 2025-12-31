@@ -100,10 +100,21 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": ".",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "@swc/jest"
+      "^.+\\.(t|j)s$": ["@swc/jest", {
+        "jsc": {
+          "parser": {
+            "syntax": "typescript",
+            "decorators": true
+          },
+          "transform": {
+            "legacyDecorator": true,
+            "decoratorMetadata": true
+          }
+        }
+      }]
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
@@ -111,7 +122,7 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "moduleNameMapper": {
-      "^#(.*)$": "<rootDir>/$1"
+      "^#(.*)$": "<rootDir>/src/$1"
     }
   }
 }
