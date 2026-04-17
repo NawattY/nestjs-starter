@@ -1,4 +1,3 @@
-import { readEnvironmentValue } from '@app/core/config/utils/read-environment.util';
 import {
   envBooleanSchema,
   envIntegerSchema,
@@ -29,11 +28,11 @@ export const redisConfiguration = registerAs('redis', (): RedisConfig => {
   const validated = validateAndTransformConfig(
     redisConfigSchema,
     {
-      REDIS_HOST: readEnvironmentValue('REDIS_HOST'),
-      REDIS_PORT: readEnvironmentValue('REDIS_PORT'),
-      REDIS_PASSWORD: readEnvironmentValue('REDIS_PASSWORD'),
-      REDIS_DB: readEnvironmentValue('REDIS_DB'),
-      REDIS_ENABLED: readEnvironmentValue('REDIS_ENABLED'),
+      REDIS_HOST: process.env.REDIS_HOST,
+      REDIS_PORT: process.env.REDIS_PORT,
+      REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+      REDIS_DB: process.env.REDIS_DB,
+      REDIS_ENABLED: process.env.REDIS_ENABLED,
     },
     'Redis Config',
   );
