@@ -1,3 +1,4 @@
+import { readEnvironmentValue } from '@app/core/config/utils/read-environment.util';
 import {
   envMsDurationSchema,
   requiredEnvStringSchema,
@@ -18,10 +19,10 @@ type AuthEnvironmentVariables = z.infer<typeof authConfigSchema>;
 
 function readAuthEnvironmentVariables(): Record<keyof AuthEnvironmentVariables, unknown> {
   return {
-    JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
-    JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN,
-    JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
-    JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN,
+    JWT_ACCESS_SECRET: readEnvironmentValue('JWT_ACCESS_SECRET'),
+    JWT_ACCESS_EXPIRES_IN: readEnvironmentValue('JWT_ACCESS_EXPIRES_IN'),
+    JWT_REFRESH_SECRET: readEnvironmentValue('JWT_REFRESH_SECRET'),
+    JWT_REFRESH_EXPIRES_IN: readEnvironmentValue('JWT_REFRESH_EXPIRES_IN'),
   };
 }
 

@@ -1,3 +1,4 @@
+import { readEnvironmentValue } from '@app/core/config/utils/read-environment.util';
 import {
   requiredEnvStringSchema,
   validateAndTransformConfig,
@@ -17,7 +18,7 @@ export const databaseConfiguration = registerAs('database', (): PrismaDatabaseCo
   const validated = validateAndTransformConfig(
     databaseConfigSchema,
     {
-      DATABASE_URL: process.env.DATABASE_URL,
+      DATABASE_URL: readEnvironmentValue('DATABASE_URL'),
     },
     'Database Config',
   );

@@ -1,6 +1,6 @@
+import { setupApiDocs } from '@app/core/api-docs/api-docs.setup';
 import { createValidationPipe } from '@app/core/pipes';
-import { setupSwagger } from '@app/core/swagger/swagger.setup';
-import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import compression from 'compression';
 import helmet from 'helmet';
 
@@ -14,7 +14,7 @@ function isAllowedCorsOrigin(origin: string | undefined): boolean {
   return !origin || ALLOWED_CORS_ORIGINS.has(origin);
 }
 
-export function configureApp(app: INestApplication): void {
+export function configureApp(app: NestExpressApplication): void {
   app.setGlobalPrefix(API_GLOBAL_PREFIX);
   app.enableShutdownHooks();
 
@@ -37,5 +37,5 @@ export function configureApp(app: INestApplication): void {
     }),
   );
 
-  setupSwagger(app);
+  setupApiDocs(app);
 }

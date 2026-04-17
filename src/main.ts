@@ -4,9 +4,10 @@ import { API_GLOBAL_PREFIX, configureApp } from '@app/core/config/utils/configur
 import { LoggerService } from '@app/core/logger/services/logger.service';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   });
 

@@ -4,31 +4,19 @@ import { FindUsersInput } from '@app/modules/user/application/models/inputs/find
 import { UpdateUserInput } from '@app/modules/user/application/models/inputs/update-user.input';
 import { UserService } from '@app/modules/user/application/user.service';
 import { ROUTES } from '@app/routes/app-routes.constant';
-import { ApiResponses } from '@app/shared/decorators/api-response.decorator';
 import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
 import { Body, Controller, Get, Patch, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 
 import { FindUsersQueryDto } from '../dtos/requests/find-users-query.dto';
 import { UpdateUserRequestDto } from '../dtos/requests/update-user-request.dto';
 import { UserListResponseDto } from '../dtos/responses/user-list-response.dto';
 import { UserResponseDto } from '../dtos/responses/user-response.dto';
-import { getMeResponse } from '../swagger/get-me.response';
-import { getUsersResponse } from '../swagger/get-users.response';
-import { updateMeResponse } from '../swagger/update-me.response';
 
-@ApiTags('User')
 @Controller(ROUTES.V1.USER.ROOT)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Get users list',
-    description: 'Retrieve a paginated list of users',
-  })
-  @ApiResponses(getUsersResponse)
   @UseGuards(JwtAuthGuard)
   @Get()
   async getUsers(@Query() query: FindUsersQueryDto): Promise<UserListResponseDto> {
@@ -43,12 +31,6 @@ export class UserController {
     });
   }
 
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Get current user profile',
-    description: 'Retrieve the profile of the currently authenticated user',
-  })
-  @ApiResponses(getMeResponse)
   @UseGuards(JwtAuthGuard)
   @Get(ROUTES.V1.USER.ME)
   async getMe(@CurrentUser() user: JwtPayload): Promise<UserResponseDto> {
@@ -58,12 +40,6 @@ export class UserController {
     });
   }
 
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Update current user profile',
-    description: 'Update the profile of the currently authenticated user',
-  })
-  @ApiResponses(updateMeResponse)
   @UseGuards(JwtAuthGuard)
   @Patch(ROUTES.V1.USER.ME)
   async updateMe(

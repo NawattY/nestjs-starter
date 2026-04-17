@@ -72,6 +72,11 @@ This plan is intentionally split into phases so the migration can be executed ac
 50. Migrated env/config validation from Joi and class-based config validators to Zod while keeping request DTO validation on class-validator, then re-ran lint, build, architecture validation, e2e, and unit tests successfully.
 51. Consolidated reusable Zod env helpers for string, optional string, integer, boolean, and ms-duration parsing so config schemas stay consistent and easier to extend.
 52. Added unit coverage for Zod config helpers and core env validation so coercion, defaults, empty-string handling, and validation error formatting are now regression-tested.
+53. Added an AI-first API contract workflow with a checked-in `openapi/openapi.yaml` file as the primary spec and served Scalar docs from that file, leaving Bruno as an optional consumer instead of a second source of truth.
+54. Updated AI architecture/coding rules to formalize the OpenAPI-first contract workflow and added Spectral-based `openapi:lint` validation for `openapi/openapi.yaml`.
+55. Removed remaining Swagger code-first response artifacts and decorators from `src`, removed obsolete Swagger dependencies, and tightened Spectral rules to require request/response examples in the OpenAPI contract.
+56. Renamed the runtime API docs bootstrap away from Swagger-specific naming and tightened Spectral further by requiring schema-level examples for `components.schemas`.
+57. Tightened Spectral to require standard error responses so operations with validated input declare `400` and secured operations declare `401` in the OpenAPI contract.
 
 ### Remaining follow-up
 
@@ -96,6 +101,10 @@ This plan is intentionally split into phases so the migration can be executed ac
 14. Env/config validation now uses Zod across core bootstrap and per-config factories, while request DTO validation remains on class-validator.
 15. Shared env parsing helpers now centralize common Zod config patterns, including empty-string handling for optional values such as Redis passwords.
 16. Core config validation and shared Zod env helpers now have dedicated unit tests under `test/unit/core/config`.
+17. The repository now exposes a checked-in OpenAPI contract at `openapi/openapi.yaml` and serves Scalar-based API docs from that file.
+18. The repository now validates the OpenAPI contract with Spectral via `npm run openapi:lint`.
+19. Runtime source code no longer maintains separate Swagger response helper files as a second API contract source.
+20. Runtime docs wiring now lives under `src/core/api-docs` instead of Swagger-named setup code.
 
 ## Remaining Drift Found After Migration
 
@@ -103,6 +112,7 @@ This plan is intentionally split into phases so the migration can be executed ac
 
 ## Validation Performed
 
+1. `npm run openapi:lint`
 1. `npm run lint`
 1. `npm run build`
 2. `npm run test:e2e -- --runInBand`

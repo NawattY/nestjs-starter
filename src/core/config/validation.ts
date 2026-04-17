@@ -14,5 +14,10 @@ const coreValidationSchema = z.object({
 });
 
 export function validateCoreConfig(config: Record<string, unknown>) {
-  return coreValidationSchema.parse(config);
+  const validatedCoreConfig = coreValidationSchema.parse(config);
+
+  return {
+    ...config,
+    ...validatedCoreConfig,
+  };
 }

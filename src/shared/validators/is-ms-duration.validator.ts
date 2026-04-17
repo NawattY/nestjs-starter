@@ -1,6 +1,6 @@
 import type { ValidationArguments, ValidationOptions } from 'class-validator';
 import { registerDecorator } from 'class-validator';
-import * as ms from 'ms';
+import ms, { type StringValue as MsStringValue } from 'ms';
 
 export function IsMsDuration(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
@@ -16,7 +16,7 @@ export function IsMsDuration(validationOptions?: ValidationOptions) {
           }
 
           try {
-            const milliseconds = ms(value as ms.StringValue);
+            const milliseconds = ms(value as MsStringValue);
 
             return typeof milliseconds === 'number' && !Number.isNaN(milliseconds);
           } catch {

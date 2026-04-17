@@ -1,3 +1,4 @@
+import { readEnvironmentValue } from '@app/core/config/utils/read-environment.util';
 import {
   envBooleanSchema,
   envStringSchema,
@@ -20,8 +21,8 @@ export const loggerConfiguration = registerAs('logger', (): LoggerConfig => {
   const validated = validateAndTransformConfig(
     loggerConfigSchema,
     {
-      LOG_LEVEL: process.env.LOG_LEVEL ?? 'debug',
-      LOG_PRETTY: process.env.LOG_PRETTY,
+      LOG_LEVEL: readEnvironmentValue('LOG_LEVEL') ?? 'debug',
+      LOG_PRETTY: readEnvironmentValue('LOG_PRETTY'),
     },
     'Logger Config',
   );

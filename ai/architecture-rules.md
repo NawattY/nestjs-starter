@@ -47,7 +47,6 @@ src/
 │       │   ├── dtos/
 │       │   │   ├── requests/
 │       │   │   └── responses/
-│       │   └── swagger/
 │       │
 │       ├── application/              # Application Layer (Module Logic)
 │       │   ├── {module}.service.ts
@@ -76,7 +75,10 @@ src/
 │   ├── database/
 │   ├── config/
 │   ├── interceptors/
-│   └── swagger/
+│   └── swagger/                      # Scalar / OpenAPI serving only
+│
+├── openapi/                          # 📘 API Contract Source of Truth
+│   └── openapi.yaml
 │
 ├── shared/                           # 🔧 Shared Utilities
 │   ├── decorators/
@@ -119,10 +121,11 @@ src/
 ## 4) Layer Rules & Responsibility
 
 ### 4.1 API Layer (`modules/{module}/api/`)
-- **Responsibility:** Controllers, DTO Validation, Swagger.
+- **Responsibility:** Controllers and DTO Validation.
 - **Forbidden:** Logic implementation, DB access.
 - **Forbidden Imports:** Domain layer, Infrastructure layer, and other feature modules.
 - **Route Rule:** MUST use constants from `src/routes/app-routes.constant.ts`.
+- **Contract Rule:** MUST NOT become the canonical API documentation source in OpenAPI-first projects.
 
 ### 4.2 Application Layer (`modules/{module}/application/`)
 - **Responsibility:** Module use-cases + orchestrating cross-module logic.
@@ -604,121 +607,76 @@ getUserId(@CurrentUser('uid') userId: string) {}
 
 ---
 
-## 14) Swagger
+## 14) OpenAPI Contract
 
-### @ApiResponses Decorator
-```typescript
-// shared/decorators/api-response.decorator.ts
-import { applyDecorators, Type } from '@nestjs/common';
-import { ApiResponse, ApiResponseOptions } from '@nestjs/swagger';
+### Source of Truth
 
-type ExtendedApiResponseOptions = ApiResponseOptions & {
-  type?: Type<unknown>;
-};
+- The single source of truth for API contracts is `openapi/openapi.yaml`.
+- Scalar or Swagger UI MUST render from the OpenAPI document.
+- Bruno, if used, MUST import or sync from the OpenAPI document.
+- AI agents MUST update the OpenAPI document directly when API behavior changes.
 
-export function ApiResponses(
-  responses: ExtendedApiResponseOptions[],
-): ReturnType<typeof applyDecorators> {
-  const decorators = responses.map((res) => ApiResponse(res));
-  return applyDecorators(...decorators);
-}
+### Default Structure
+
+```text
+openapi/
+└── openapi.yaml
 ```
 
-### SwaggerHelpers Class
-```typescript
-// core/swagger/swagger-helpers.ts
-import { ERROR_CODE } from '@app/constants/error-code.constant';
-import { ERROR_MESSAGE } from '@app/constants/error-message.constant';
+**Default Rule:** Keep the contract in a single file unless the spec becomes large enough that human maintenance suffers.
 
-export class SwaggerHelpers {
-  static success(status: number, example: unknown, description = 'Success') {
-    return { status, description, examples: { Success: { value: example } } };
-  }
+### Optional Multi-File Structure
 
-  static validationError(customErrors?: Record<string, string[]>) {
-    return {
-      status: 400,
-      description: 'Bad Request',
-      examples: {
-        'Error: Validation Error': {
-          value: {
-            status: { code: 400, message: 'Bad Request' },
-            error: {
-              code: ERROR_CODE.VALIDATE_ERROR,
-              message: ERROR_MESSAGE[ERROR_CODE.VALIDATE_ERROR],
-              errors: customErrors || { field: ['field is required'] },
-            },
-          },
-        },
-      },
-    };
-  }
+If the API grows significantly, the contract MAY be split by concern using `$ref`.
 
-  static unauthorized() { /* ... */ }
-  static notFound(resourceName: string) { /* ... */ }
-  static conflict(errorCode: number, message: string) { /* ... */ }
-  static paginated<T>(items: T[], description = 'Success') { /* ... */ }
-}
+```text
+openapi/
+├── openapi.yaml
+├── paths/
+│   ├── auth/
+│   └── users/
+└── components/
+    ├── schemas/
+    ├── responses/
+    ├── parameters/
+    └── security/
 ```
 
-### Response Files (Array Format)
-```typescript
-// modules/{module}/api/swagger/create-collection.response.ts
-import { SwaggerHelpers } from '@app/core/swagger/swagger-helpers';
-import { ERROR_CODE } from '@app/constants/error-code.constant';
+**Use Multi-File Only When:**
+- Merge conflicts on the contract become frequent.
+- The single-file spec becomes difficult for humans to review.
+- Shared schemas/responses become large enough to justify extraction.
 
-const collectionExample = {
-  id: 'uuid',
-  title: 'My Collection',
-  createdAt: '2024-01-01T00:00:00.000Z',
-};
+### Rules
 
-export const createCollectionResponse = [
-  SwaggerHelpers.success(201, collectionExample, 'Collection created'),
-  SwaggerHelpers.validationError({ title: ['title is required'] }),
-  SwaggerHelpers.conflict(ERROR_CODE.COLLECTION_ALREADY_EXISTS, 'Collection already exists'),
-];
+- **Required:** Every public endpoint MUST be documented in `openapi/openapi.yaml`.
+- **Required:** Every operation MUST define `operationId`, `summary`, request schema, response schema, and security requirements when applicable.
+- **Required:** Validation and business error responses SHOULD be documented with concrete examples.
+- **Forbidden:** Maintaining API contracts in parallel Swagger helper files, response arrays, or other duplicate documentation sources.
+- **Forbidden:** Treating Bruno collections as the canonical contract.
 
-export const getCollectionResponse = [
-  SwaggerHelpers.success(200, collectionExample),
-  SwaggerHelpers.unauthorized(),
-  SwaggerHelpers.notFound('Collection'),
-];
+### Controller Role
+
+Controllers remain responsible for runtime behavior only.
+
+- MAY use lightweight Swagger decorators if they help runtime docs integration during migration.
+- MUST NOT be treated as the authoritative API contract.
+- MUST NOT require separate `modules/{module}/api/swagger/*.response.ts` files when the project follows OpenAPI-first.
+
+### Consumer Flow
+
+```text
+openapi/openapi.yaml
+├── Scalar / Swagger UI (human docs)
+└── Bruno import/sync (API client workflow)
 ```
 
-### Barrel Export
-```typescript
-// modules/{module}/api/swagger/index.ts
-export { createCollectionResponse } from './create-collection.response';
-export { getCollectionResponse } from './get-collection.response';
-```
+### Benefits
 
-### Usage in Controller (Clean)
-```typescript
-import { ApiResponses } from '@app/shared/decorators/api-response.decorator';
-import { createCollectionResponse, getCollectionResponse } from '../swagger';
-
-@ApiTags('Collection')
-@Controller(ROUTES.V1.COLLECTION.ROOT)
-export class CollectionController {
-  
-  @ApiOperation({ summary: 'Create collection' })
-  @ApiResponses(createCollectionResponse)  // ✅ Single decorator, all responses
-  @Post()
-  create(@Body() dto: CreateCollectionDto) {}
-
-  @ApiOperation({ summary: 'Get collection by ID' })
-  @ApiResponses(getCollectionResponse)
-  @Get(':id')
-  findOne(@Param('id') id: string) {}
-}
-```
-
-**Benefits:**
-- ✅ Single `@ApiResponses()` decorator instead of multiple `@ApiResponse()`
-- ✅ Consistent error response format across all endpoints
-- ✅ Easy to reuse response definitions
-- ✅ Swagger documentation matches actual error responses
+- ✅ Single source of truth for AI and humans
+- ✅ Lower risk of drift between code annotations and published docs
+- ✅ Easier API review in pull requests
+- ✅ Clear contract handoff to Scalar, Swagger UI, and Bruno
 
 ---
 
@@ -788,7 +746,7 @@ Before generating code:
 - [ ] **Transaction:** `@Transactional()` in Service (caller) for cross-module?
 - [ ] **Types:** Passing DTOs to Service? → Use Input Model
 - [ ] **Return:** Returning Prisma object? → Map to Output Model
-- [ ] **Swagger:** Created swagger response files?
+- [ ] **OpenAPI:** Updated `openapi/openapi.yaml` for contract changes?
 - [ ] **Path Alias:** Using `@app/*` consistently?
 
 ---

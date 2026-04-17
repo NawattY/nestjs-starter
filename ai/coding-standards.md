@@ -218,11 +218,20 @@ function processOrder(orderId: string) {
 ### Avoid
 - ❌ Mixing async/await with .then()
 - ❌ Sequential await when parallel is possible
-- ❌ Swallowing errors silently
 
 ---
 
-## 9) ERROR MESSAGES
+## 9) API CONTRACT
+
+- `openapi/openapi.yaml` is the only canonical API contract file.
+- Do not create parallel API documentation artifacts by default.
+- If Scalar or Swagger UI is used, it must render from the OpenAPI document.
+- If Bruno is used, it must import or sync from the OpenAPI document.
+- Do not introduce Swagger helper files or response-definition arrays as a second source of truth in OpenAPI-first projects.
+
+---
+
+## 10) ERROR MESSAGES
 
 ### Consistent Format
 ```typescript
