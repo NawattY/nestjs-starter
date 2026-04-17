@@ -110,7 +110,7 @@ Imports must be organized in the following order, separated by blank lines:
 ```typescript
 // ✅ CORRECT
 import { Injectable, Inject } from '@nestjs/common';
-import { PrismaService } from '@prisma/client';
+import { plainToInstance } from 'class-transformer';
 
 import { UserDatasource, USER_DATASOURCE } from '../infrastructure/datasources/user.datasource.interface';
 import { UserException } from '../exceptions/user.exception';
@@ -128,6 +128,7 @@ import { UserDatasource } from '../infrastructure/datasources/user.datasource.in
 - **No default exports** — Always use named exports
 - **No barrel files in modules** — Import directly from source
 - **Avoid circular imports** — Use interface tokens for DI
+- **Prefer nearest valid relative path** — Do not climb higher than necessary or reintroduce project-wide aliases
 
 ---
 
@@ -136,7 +137,7 @@ import { UserDatasource } from '../infrastructure/datasources/user.datasource.in
 ### When to Comment
 - **Complex business logic** — Explain the "why", not the "what"
 - **Workarounds** — Link to issue/ticket
-- **Public APIs** — JSDoc for all exported functions
+- **Shared/public utilities** — JSDoc when the behavior is non-obvious or reused across modules
 
 ### Comment Patterns
 ```typescript
@@ -157,13 +158,12 @@ if (!user) {
 ### JSDoc for Public APIs
 ```typescript
 /**
- * Creates a new collection item.
+ * Creates a user-facing output model from an internal entity.
  * 
- * @param input - Collection creation data
- * @returns Created collection with generated ID
- * @throws CollectionException.duplicateTitle - If title already exists
+ * @param entity - Domain entity from the datasource layer
+ * @returns Serialized output model for controller responses
  */
-async create(input: CreateCollectionInput): Promise<CollectionOutput> {
+static fromEntity(entity: UserEntity): UserOutput {
   // ...
 }
 ```
@@ -224,7 +224,8 @@ function processOrder(orderId: string) {
 
 - `openapi/openapi.yaml` is the only canonical API contract file.
 - Do not create parallel API documentation artifacts by default.
-- If Scalar or Swagger UI is used, it must render from the OpenAPI document.
+- Current repo uses Scalar and it must render from the OpenAPI document.
+- If another renderer is introduced later, it must still consume the OpenAPI document.
 - If Bruno is used, it must import or sync from the OpenAPI document.
 - Do not introduce Swagger helper files or response-definition arrays as a second source of truth in OpenAPI-first projects.
 
@@ -236,17 +237,19 @@ function processOrder(orderId: string) {
 ```typescript
 // constants/error-code.constant.ts
 export const ERROR_CODE = {
-  // Format: MODULE_ACTION_REASON
-  USER_CREATE_DUPLICATE_EMAIL: 'USER_CREATE_DUPLICATE_EMAIL',
-  USER_UPDATE_NOT_FOUND: 'USER_UPDATE_NOT_FOUND',
-  COLLECTION_DELETE_HAS_ITEMS: 'COLLECTION_DELETE_HAS_ITEMS',
+  // Numeric namespace by concern
+  VALIDATE_ERROR: 100422,
+  UNAUTHORIZED: 101401,
+  USER_NOT_FOUND: 102404,
+  USER_SUSPENDED: 102400,
 } as const;
 
 // constants/error-message.constant.ts
 export const ERROR_MESSAGE = {
-  USER_CREATE_DUPLICATE_EMAIL: 'Email already exists',
-  USER_UPDATE_NOT_FOUND: 'User not found',
-  COLLECTION_DELETE_HAS_ITEMS: 'Cannot delete collection with items',
+  [ERROR_CODE.VALIDATE_ERROR]: 'Validation failed',
+  [ERROR_CODE.UNAUTHORIZED]: 'Unauthorized',
+  [ERROR_CODE.USER_NOT_FOUND]: 'User not found',
+  [ERROR_CODE.USER_SUSPENDED]: 'User account is suspended',
 } as const;
 ```
 
@@ -254,8 +257,8 @@ export const ERROR_MESSAGE = {
 ```typescript
 // modules/user/exceptions/user.exception.ts
 import { HttpStatus } from '@nestjs/common';
-import { ERROR_CODE } from '../../constants/error-code.constant';
-import { AppException } from '../../shared/exceptions/app.exception';
+import { ERROR_CODE } from '../../../constants/error-code.constant';
+import { AppException } from '../../../shared/exceptions/app.exception';
 
 export class UserException {
   static notFound(): never {
@@ -265,10 +268,10 @@ export class UserException {
     });
   }
 
-  static duplicateEmail(): never {
+  static userSuspended(): never {
     throw new AppException({
-      errorCode: ERROR_CODE.USER_ALREADY_EXISTS,
-      statusCode: HttpStatus.CONFLICT,
+      errorCode: ERROR_CODE.USER_SUSPENDED,
+      statusCode: HttpStatus.BAD_REQUEST,
     });
   }
 }
@@ -282,29 +285,33 @@ export class UserException {
 ### i18n-Ready Structure
 ```typescript
 // For future i18n support, use placeholders
+import { ERROR_CODE } from './error-code.constant';
+
 export const ERROR_MESSAGE = {
-  USER_CREATE_DUPLICATE_EMAIL: 'Email {{email}} already exists',
-  ORDER_EXCEED_LIMIT: 'Order exceeds limit of {{limit}} items',
+  [ERROR_CODE.USER_NOT_FOUND]: 'User {{userId}} not found',
+  [ERROR_CODE.USER_SUSPENDED]: 'User {{userId}} is suspended',
 } as const;
 ```
 
 ---
 
-## 10) TYPESCRIPT STRICT MODE
+## 11) TYPESCRIPT STRICT MODE
 
-### Required tsconfig Settings
+### Important tsconfig Settings
 ```json
 {
   "compilerOptions": {
     "strict": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUncheckedIndexedAccess": true,
+    "useUnknownInCatchVariables": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true
   }
 }
 ```
+
+**Rule:** อย่าลดความเข้มของ strict settings เพื่อแก้ error เฉพาะจุด ให้แก้ types หรือ control flow ให้ชัดแทน
 
 ### Handling Nullable Values
 ```typescript

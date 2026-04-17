@@ -3,6 +3,16 @@
 This project uses **Prisma Migrate** for database schema management.
 
 > 📂 Migrations are stored in `src/database/migrations/`
+> 📄 Prisma schema source of truth is `src/database/schema.prisma`
+
+---
+
+## AI Notes
+
+- ถ้าแก้ database schema ให้เริ่มที่ `src/database/schema.prisma`
+- ใช้ `prisma migrate dev` สำหรับสร้าง migration ใหม่ใน development
+- อย่าแก้ SQL ของ migration เก่าที่ถูกใช้งานไปแล้ว เว้นแต่ผู้ใช้สั่งชัดเจน
+- ถ้า schema เปลี่ยนแล้วกระทบ API, DTO, output model, หรือ OpenAPI contract ให้แก้ส่วนที่เกี่ยวข้องในรอบเดียว
 
 ---
 

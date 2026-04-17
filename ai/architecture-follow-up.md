@@ -1,5 +1,8 @@
 # Architecture Follow-up
 
+> Historical context only. ทั้งสองประเด็นด้านล่างถูก implement แล้วใน codebase ปัจจุบัน
+> ถ้าต้องการข้อเท็จจริงล่าสุดของ repo ให้ดู `ai/current-repo-reference.md` ร่วมด้วย
+
 ## Scope
 
 This note captures the two architecture issues that were identified during the boilerplate review and the intended direction for the next changes.

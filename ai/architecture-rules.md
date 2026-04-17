@@ -1,4 +1,4 @@
-# NestJS Clean Modular Monolith — AI Coding Rules
+# NestJS Starter — Architecture Rules For AI
 
 > **PURPOSE:** This document defines architecture patterns for NestJS backend applications.  
 > **AUDIENCE:** AI agents designing, generating, or reviewing NestJS code.  
@@ -42,15 +42,13 @@ src/
 │   └── {module}/
 │       ├── api/                      # Presentation Layer
 │       │   ├── controllers/
-│       │   │   ├── {module}.controller.ts      # V1 Controller
-│       │   │   └── {module}.v2.controller.ts   # V2 Controller (if exists)
+│       │   │   └── {module}.controller.ts
 │       │   ├── dtos/
 │       │   │   ├── requests/
 │       │   │   └── responses/
 │       │
 │       ├── application/              # Application Layer (Module Logic)
 │       │   ├── {module}.service.ts
-│       │   ├── {module}.service.spec.ts
 │       │   └── models/
 │       │       ├── inputs/
 │       │       └── outputs/
@@ -71,24 +69,32 @@ src/
 │       └── {module}.module.ts
 │
 ├── core/                             # ⚙️ Core Infrastructure
+│   ├── api-docs/                     # Scalar / OpenAPI serving only
 │   ├── auth/
-│   ├── database/
+│   ├── cache/
 │   ├── config/
+│   ├── database/
+│   ├── event/
+│   ├── exceptions/
+│   ├── file-upload/
 │   ├── interceptors/
-│   └── swagger/                      # Scalar / OpenAPI serving only
+│   ├── logger/
+│   ├── mailer/
+│   ├── pipes/
+│   └── redis/
 │
 ├── openapi/                          # 📘 API Contract Source of Truth
 │   └── openapi.yaml
 │
 ├── shared/                           # 🔧 Shared Utilities
 │   ├── decorators/
-│   ├── dtos/
+│   ├── dto/
 │   ├── models/
 │   ├── enums/
 │   ├── exceptions/
-│   ├── filters/
-│   ├── pipes/
-│   └── utils/
+│   ├── helpers/
+│   ├── interfaces/
+│   └── validators/
 │
 └── constants/
     ├── error-code.constant.ts
@@ -98,6 +104,8 @@ src/
 ---
 
 ## 3) Polyrepo vs Monorepo
+
+**Current repo note:** repository นี้เป็น single-package NestJS app ไม่ได้ใช้ monorepo package import pattern ในปัจจุบัน
 
 | Type | Database Location | Import Pattern |
 |------|-------------------|----------------|
@@ -132,9 +140,11 @@ src/
 - **Injection:** MUST use `@Inject(TOKEN)` with Interface for Datasources.
 - **Forbidden:**
   - ❌ Importing API layer classes.
-  - ❌ Importing `PrismaService` directly.
+  - ❌ Service classes importing `PrismaService` as their primary data access mechanism.
   - ❌ Using DTOs (use Input Models).
   - ❌ Returning Entities (use Output Models).
+
+**Exception for application rules:** DB-backed validation rules under `application/rules/` MAY inject `PrismaService` only to call `ensureConnection()` when they also rely on transaction-aware DB access.
 
 ```typescript
 // ✅ CORRECT - Import Service from other Module
@@ -154,7 +164,8 @@ imports: [forwardRef(() => ProductModule)]
 
 ### 4.4 Infrastructure Layer (`modules/{module}/infrastructure/`)
 - **Responsibility:** Database operations.
-- **Transaction Rule:** MUST inject `TransactionHost<TransactionalAdapterPrisma>` instead of `PrismaService` to support `nestjs-cls`.
+- **Transaction Rule:** DB queries MUST runผ่าน `TransactionHost<TransactionalAdapterPrisma>` เพื่อรองรับ `nestjs-cls`.
+- **Connection Rule:** MAY inject `PrismaService` only to call `ensureConnection()` before DB access. MUST NOT use `PrismaService` as the primary query client inside datasources.
 - **Pattern:** Interface + Implementation (Dependency Inversion).
 - **Required:** `transformEntity()` method.
 
@@ -174,10 +185,15 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 export class UserPrismaDatasource implements UserDatasource {
   constructor(
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+    private readonly prismaService: PrismaService,
   ) {}
+
+  private async ensureDatabaseConnection(): Promise<void> {
+    await this.prismaService.ensureConnection();
+  }
   
   async findById(id: string): Promise<UserEntity | null> {
-    // 💡 .tx accesses the current transaction context (or default client)
+    await this.ensureDatabaseConnection();
     const user = await this.txHost.tx.user.findUnique({ where: { id } });
     return user ? this.transformEntity(user) : null;
   }
@@ -192,9 +208,11 @@ export class UserPrismaDatasource implements UserDatasource {
 
 ## 5) Transaction Management (Unit of Work)
 
-**Mechanism:** Use `nestjs-cls` with `@Transactional()` decorator.
+**Mechanism:** Use `nestjs-cls` with `@Transactional()` decorator when a service orchestrates multiple DB writes or cross-module work in one unit.
 
 ### 5.1 Cross-Module Transaction
+
+**Note:** ตัวอย่างด้านล่างเป็น pattern เชิงสถาปัตยกรรม ไม่ใช่ module ที่มีอยู่จริงใน repo ปัจจุบัน
 
 ```typescript
 // modules/order/application/order.service.ts
@@ -240,28 +258,22 @@ export class OrderService {
 **Location:** `src/routes/app-routes.constant.ts`
 
 ```typescript
-const PREFIX = { V1: 'v1', V2: 'v2' };
+const PREFIX = { V1: 'v1' };
 
 export const ROUTES = {
-  // 🟢 VERSION 1
   V1: {
-    COLLECTION: {
-      ROOT: `${PREFIX.V1}/collections`,
-      BY_ID: ':id',
+    AUTH: {
+      ROOT: `${PREFIX.V1}/auth`,
+      LOGIN: 'login',
+      REFRESH: 'refresh',
+      LOGOUT: 'logout',
+      ME: 'me',
     },
-    REMINDER: {
-      ROOT: `${PREFIX.V1}/reminders`,
-      BY_ID: ':id',
-      COMPLETE: ':id/complete',
-    }
+    USER: {
+      ROOT: `${PREFIX.V1}/users`,
+      ME: 'me',
+    },
   },
-  // 🔵 VERSION 2 (Incremental Rollout)
-  V2: {
-    COLLECTION: {
-      ROOT: `${PREFIX.V2}/collections`,
-      BY_ID: ':id',
-    },
-  }
 } as const;
 ```
 
@@ -272,28 +284,18 @@ export const ROUTES = {
 ```typescript
 import { ROUTES } from '../../routes/app-routes.constant';
 
-@Controller(ROUTES.V1.COLLECTION.ROOT)
-export class CollectionController {
+@Controller(ROUTES.V1.USER.ROOT)
+export class UserController {
   
   @Get() 
   findAll() {}
 
-  @Get(ROUTES.V1.COLLECTION.BY_ID)
-  findOne(@Param('id') id: string) {}
+  @Get(ROUTES.V1.USER.ME)
+  findMe() {}
 }
 ```
 
-**V2 Controller (Separate File):**
-
-```typescript
-@Controller(ROUTES.V2.COLLECTION.ROOT)
-export class CollectionV2Controller {
-  @Get(ROUTES.V2.COLLECTION.BY_ID)
-  async findOne(@Param('id') id: string) {
-    // Logic for V2 (e.g., different response structure)
-  }
-}
-```
+**Versioning Note:** current repo ใช้ route constants และมี V1 เป็น baseline เท่านั้น ถ้าจะเพิ่ม V2 ค่อยเพิ่ม constants และ controller ใหม่เมื่อมี requirement จริง
 
 ---
 
@@ -322,18 +324,18 @@ HTTP Request → DTO → Input Model → Entity → Output Model → Response DT
 
 | Type | Pattern | Example |
 |------|---------|---------|
-| Controller (V1) | `{module}.controller.ts` | `collection.controller.ts` |
-| Controller (V2) | `{module}.v2.controller.ts` | `collection.v2.controller.ts` |
-| Service | `{module}.service.ts` | `collection.service.ts` |
-| DTO | `{action}-{module}.dto.ts` | `create-collection.dto.ts` |
-| Input Model | `{action}-{module}.input.ts` | `create-collection.input.ts` |
-| Output Model | `{module}.output.ts` | `collection.output.ts` |
-| Entity | `{module}.entity.ts` | `collection.entity.ts` |
+| Controller | `{module}.controller.ts` | `user.controller.ts` |
+| Service | `{module}.service.ts` | `auth.service.ts` |
+| Request DTO | `{action}-request.dto.ts` | `login-request.dto.ts` |
+| Response DTO | `{name}-response.dto.ts` | `auth-response.dto.ts` |
+| Input Model | `{action}.input.ts` | `login.input.ts` |
+| Output Model | `{name}.output.ts` | `user.output.ts` |
+| Entity | `{module}.entity.ts` | `user.entity.ts` |
 | Value Object | `{name}.vo.ts` | `isbn.vo.ts` |
-| Datasource Interface | `{module}.datasource.interface.ts` | `collection.datasource.interface.ts` |
-| Datasource Impl | `{module}.prisma.datasource.ts` | `collection.prisma.datasource.ts` |
-| Exception | `{module}.exception.ts` | `collection.exception.ts` |
-| Enum | `{name}.enum.ts` | `collection-type.enum.ts` |
+| Datasource Interface | `{module}.datasource.interface.ts` | `user.datasource.interface.ts` |
+| Datasource Impl | `{module}.prisma.datasource.ts` | `user.prisma.datasource.ts` |
+| Exception | `{module}.exception.ts` | `user.exception.ts` |
+| Enum | `{name}.enum.ts` | `common-status.enum.ts` |
 
 ---
 
@@ -342,6 +344,8 @@ HTTP Request → DTO → Input Model → Entity → Output Model → Response DT
 **Rule:** Services MAY import other Services directly. Use `forwardRef()` if circular.
 
 ### Scenario A: Validation + Action (e.g., Order needs to check and deduct Product stock)
+
+**Note:** ตัวอย่าง cross-module ด้านล่างใช้ชื่อ module สมมติ เพื่ออธิบาย dependency pattern เท่านั้น
 
 ```typescript
 // OrderService imports ProductService
@@ -501,7 +505,7 @@ async findById(id: string): Promise<CollectionOutput> {
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     // Handles AppException and formats response consistently
-    // See scaffolds/core/exceptions/ for full implementation
+    // See src/core/exceptions/http-exception.filter.ts for the current implementation pattern
   }
 }
 ```
@@ -545,9 +549,10 @@ export type CommonStatusType = `${CommonStatus}`;
 
 | Layer | Class | Location |
 |-------|-------|----------|
-| **API** | `PaginateQueryDto` | `shared/dtos/pagination/` |
-| **Application** | `PaginateInput` | `shared/models/pagination/` |
-| **Application** | `PaginatedOutput<T>` | `shared/models/pagination/` |
+| **API** | `PaginateQueryDto` | `src/shared/dto/paginate-query.dto.ts` |
+| **API Response** | `PaginateResponseDto<T>` | `src/shared/dto/paginate-response.dto.ts` |
+| **Application** | `PaginateInput` | `src/shared/models/paginate.input.ts` |
+| **Application** | `PaginatedOutput<T>` | `src/shared/models/paginate.output.ts` |
 
 ```typescript
 // Datasource usage
@@ -586,21 +591,17 @@ export interface JwtPayload extends JwtBasePayload {
 
 ### Current User Decorator
 ```typescript
-// core/auth/decorators/current-user.decorator.ts
+// shared/decorators/current-user.decorator.ts
 export const CurrentUser = createParamDecorator(
-  (data: keyof JwtPayload | undefined, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
-    const user = request.user as JwtPayload;
-    return data ? user?.[data] : user;
+  (data: unknown, ctx: ExecutionContext): JwtPayload => {
+    const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
+    return request.user;
   },
 );
 
 // Usage
-@Get('profile')
+@Get(ROUTES.V1.AUTH.ME)
 getProfile(@CurrentUser() user: JwtPayload) {}
-
-@Get('id')
-getUserId(@CurrentUser('uid') userId: string) {}
 ```
 
 ---
@@ -610,7 +611,8 @@ getUserId(@CurrentUser('uid') userId: string) {}
 ### Source of Truth
 
 - The single source of truth for API contracts is `openapi/openapi.yaml`.
-- Scalar or Swagger UI MUST render from the OpenAPI document.
+- Current repo renders human docs with Scalar from the OpenAPI document.
+- Other renderers are acceptable only if they still consume the OpenAPI document instead of becoming a second source of truth.
 - Bruno, if used, MUST import or sync from the OpenAPI document.
 - AI agents MUST update the OpenAPI document directly when API behavior changes.
 
@@ -657,15 +659,15 @@ openapi/
 
 Controllers remain responsible for runtime behavior only.
 
-- MAY use lightweight Swagger decorators if they help runtime docs integration during migration.
 - MUST NOT be treated as the authoritative API contract.
 - MUST NOT require separate `modules/{module}/api/swagger/*.response.ts` files when the project follows OpenAPI-first.
+- SHOULD keep request/response serialization aligned with the OpenAPI document instead of relying on runtime decorators as the contract source.
 
 ### Consumer Flow
 
 ```text
 openapi/openapi.yaml
-├── Scalar / Swagger UI (human docs)
+├── Scalar UI (human docs)
 └── Bruno import/sync (API client workflow)
 ```
 
@@ -674,7 +676,7 @@ openapi/openapi.yaml
 - ✅ Single source of truth for AI and humans
 - ✅ Lower risk of drift between code annotations and published docs
 - ✅ Easier API review in pull requests
-- ✅ Clear contract handoff to Scalar, Swagger UI, and Bruno
+- ✅ Clear contract handoff to Scalar UI and Bruno
 
 ---
 
@@ -696,10 +698,12 @@ export class CollectionModule {}
 ### App Module Registration Order
 1. **ConfigModule** — Always first (isGlobal: true)
 2. **ClsModule** — For transaction management (`ClsPluginTransactional` + `TransactionalAdapterPrisma`)
-3. **Core Modules** — Database, Auth, Health
-4. **Domain Modules** — Feature modules (alphabetical order)
+3. **Core Modules** — Config-adjacent infrastructure such as database, auth, logger, cache, redis, event, docs
+4. **Feature Modules** — Current repo uses `AuthModule` and `UserModule`
 
-**Note:** See `scaffolds/app.module.ts` for full ClsModule configuration.
+**Ordering rule:** keep the composition root readable and grouped by concern; do not optimize for alphabetical order over clarity.
+
+**Note:** Use the existing `src/app.module.ts` as the composition reference for this repo.
 
 ---
 
@@ -709,10 +713,10 @@ export class CollectionModule {}
 
 | Type | Location | Pattern | Purpose |
 |------|----------|---------|---------|
-| **Unit** | `modules/{module}/application/*.spec.ts` | `{module}.service.spec.ts` | Service logic |
-| **Contract** | `test/api/v1/` | `{module}.contract.spec.ts` | API response shape |
-| **Flow** | `test/flows/` | `{action}-{module}.flow.spec.ts` | E2E user journey |
-| **Integration** | `test/integration/` | `{module}.integration.spec.ts` | Database operations |
+| **Unit** | `test/unit/**` | `*.spec.ts` | Service, DTO, config, and utility logic |
+| **E2E** | `test/*.e2e-spec.ts` | `{module}.e2e-spec.ts` | HTTP behavior and controller wiring |
+| **Source-level Spec** | `src/**/*.spec.ts` | `*.spec.ts` | Small source-adjacent specs that still use the main Jest config |
+| **Architecture** | `npm run test:arch` | dependency-cruiser | Dependency boundary validation |
 
 ### AAA Pattern (Unit Tests)
 ```typescript
@@ -727,7 +731,7 @@ it('should create', async () => {
 });
 ```
 
-**Note:** See `scaffolds/` for full test examples.
+**Note:** Use the existing tests under `test/unit` and `test/*.e2e-spec.ts` as the reference patterns for this repo.
 
 ---
 
@@ -738,7 +742,7 @@ Before generating code:
 - [ ] **4 Layers:** Created api, application, domain, infrastructure folders?
 - [ ] **Controllers folder:** Controller is in `api/controllers/`?
 - [ ] **Routes:** Defined in `app-routes.constant.ts`? No hardcoded strings?
-- [ ] **Infra:** Injecting `TransactionHost` instead of `PrismaService`?
+- [ ] **Infra:** Using `TransactionHost` for queries and `PrismaService.ensureConnection()` when DB-backed?
 - [ ] **Injection:** Using `@Inject(TOKEN)` with Interface for Datasources?
 - [ ] **Cross-Module:** Using `forwardRef()` if circular dependency?
 - [ ] **Transaction:** `@Transactional()` in Service (caller) for cross-module?

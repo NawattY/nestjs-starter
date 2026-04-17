@@ -1,5 +1,8 @@
 # Codebase Alignment Phase Plan
 
+> Historical migration ledger. ใช้อ่านเพื่อเข้าใจที่มาของโครงสร้างปัจจุบัน ไม่ใช่ checklist งานค้างสำหรับทุก task ใหม่
+> สำหรับข้อเท็จจริงล่าสุดของ repo ให้ยึด `ai/current-repo-reference.md` และ source code ปัจจุบันก่อน
+
 ## Objective
 
 Align the current NestJS codebase with:
@@ -92,10 +95,10 @@ This plan is intentionally split into phases so the migration can be executed ac
 4. No standalone `src/business` layer remains in the runtime code.
 5. Auth and user datasources use `TransactionHost<TransactionalAdapterPrisma>` instead of direct `PrismaService` injection.
 6. Jest config for e2e and unit tests is aligned to `@swc/jest` and Nest decorator metadata without alias-specific mapping.
-7. Reusable Swagger response helpers now live under `src/core/swagger`.
+7. Runtime source code no longer uses Swagger response helper files as an API contract source.
 8. Shared JWT payload typing now lives under `src/core/auth` instead of the `auth` feature module.
 9. `AppModule` imports feature modules directly, without any top-level `src/api` module layer remaining.
-10. Swagger bootstrap setup and response helpers now live under `src/core/swagger` as part of application wiring.
+10. Runtime docs wiring lives under `src/core/api-docs` as part of application wiring.
 11. No top-level `src/api` directory remains in the repository.
 12. `ai/architecture-rules.md` is the only maintained architecture source until post-migration docs are recreated.
 13. `npm run lint` now completes with zero errors and zero warnings.
