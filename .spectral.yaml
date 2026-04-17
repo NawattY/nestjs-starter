@@ -1,0 +1,97 @@
+extends:
+  - spectral:oas
+
+rules:
+  info-contact: off
+  info-description: off
+  license-url: off
+  oas3-api-servers: warn
+  operation-description: error
+  operation-operationId: error
+  operation-tags: error
+  path-params: error
+  request-media-example:
+    description: Request body media types must define example or examples.
+    severity: error
+    given: $.paths[*][*].requestBody.content[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            - required:
+                - example
+            - required:
+                - examples
+  response-media-example:
+    description: Response media types must define example or examples.
+    severity: error
+    given: $.paths[*][*].responses[*].content[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            - required:
+                - example
+            - required:
+                - examples
+  component-schema-example:
+    description: Component schemas must define example or examples.
+    severity: error
+    given: $.components.schemas[*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            - required:
+                - example
+            - required:
+                - examples
+  validated-operation-400-response:
+    description: Operations with request input must define a 400 validation error response.
+    severity: error
+    given: $.paths[*][*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          if:
+            anyOf:
+              - required:
+                  - requestBody
+              - required:
+                  - parameters
+          then:
+            required:
+              - responses
+            properties:
+              responses:
+                type: object
+                required:
+                  - '400'
+  secured-operation-401-response:
+    description: Secured operations must define a 401 unauthorized response.
+    severity: error
+    given: $.paths[*][*]
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          if:
+            required:
+              - security
+          then:
+            required:
+              - responses
+            properties:
+              responses:
+                type: object
+                required:
+                  - '401'

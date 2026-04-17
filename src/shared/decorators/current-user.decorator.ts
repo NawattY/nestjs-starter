@@ -1,6 +1,8 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Request } from 'express';
-import { JwtPayload } from '#modules/auth/rbac/jwt-payload.interface';
+import type { ExecutionContext } from '@nestjs/common';
+import { createParamDecorator } from '@nestjs/common';
+import type { Request } from 'express';
+
+import type { JwtPayload } from '../../core/auth/jwt-payload.interface';
 
 interface AuthenticatedRequest extends Request {
   user: JwtPayload;

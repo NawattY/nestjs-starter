@@ -1,28 +1,21 @@
-import { validateAndTransformConfig } from '#core/config/utils/validate-config.util';
 import { registerAs } from '@nestjs/config';
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { z } from 'zod';
 
-class EnvironmentVariables {
-  @IsString()
-  @IsOptional()
-  REDIS_HOST: string = 'localhost';
+import {
+  envBooleanSchema,
+  envIntegerSchema,
+  envStringSchema,
+  optionalEnvStringSchema,
+  validateAndTransformConfig,
+} from '../core/config/utils/validate-config.util';
 
-  @IsNumber()
-  @IsOptional()
-  REDIS_PORT: number = 6379;
-
-  @IsString()
-  @IsOptional()
-  REDIS_PASSWORD?: string;
-
-  @IsNumber()
-  @IsOptional()
-  REDIS_DB: number = 0;
-
-  @IsBoolean()
-  @IsOptional()
-  REDIS_ENABLED: boolean = true;
-}
+const redisConfigSchema = z.object({
+  REDIS_HOST: envStringSchema('localhost'),
+  REDIS_PORT: envIntegerSchema(6379),
+  REDIS_PASSWORD: optionalEnvStringSchema,
+  REDIS_DB: envIntegerSchema(0),
+  REDIS_ENABLED: envBooleanSchema.default(true),
+});
 
 export interface RedisConfig {
   host: string;
@@ -33,17 +26,15 @@ export interface RedisConfig {
 }
 
 export const redisConfiguration = registerAs('redis', (): RedisConfig => {
-  const rawConfig = {
-    REDIS_HOST: process.env.REDIS_HOST ?? 'localhost',
-    REDIS_PORT: process.env.REDIS_PORT ?? 6379,
-    REDIS_PASSWORD: process.env.REDIS_PASSWORD,
-    REDIS_DB: process.env.REDIS_DB ?? 0,
-    REDIS_ENABLED: process.env.REDIS_ENABLED ?? true,
-  };
-
   const validated = validateAndTransformConfig(
-    EnvironmentVariables,
-    rawConfig,
+    redisConfigSchema,
+    {
+      REDIS_HOST: process.env.REDIS_HOST,
+      REDIS_PORT: process.env.REDIS_PORT,
+      REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+      REDIS_DB: process.env.REDIS_DB,
+      REDIS_ENABLED: process.env.REDIS_ENABLED,
+    },
     'Redis Config',
   );
 

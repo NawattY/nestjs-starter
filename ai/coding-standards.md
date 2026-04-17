@@ -100,4 +100,257 @@ it('should return user balance', async () => {
 
 ---
 
+## 6) IMPORT ORDERING
+
+Imports must be organized in the following order, separated by blank lines:
+
+1. **External packages** (node_modules)
+2. **Internal relative imports** (./, ../)
+
+```typescript
+// ✅ CORRECT
+import { Injectable, Inject } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+
+import { UserDatasource, USER_DATASOURCE } from '../infrastructure/datasources/user.datasource.interface';
+import { UserException } from '../exceptions/user.exception';
+
+import { CreateUserInput } from './models/inputs/create-user.input';
+import { UserOutput } from './models/outputs/user.output';
+
+// ❌ WRONG (mixed order, no separation)
+import { CreateUserInput } from './models/inputs/create-user.input';
+import { Injectable } from '@nestjs/common';
+import { UserDatasource } from '../infrastructure/datasources/user.datasource.interface';
+```
+
+### Import Rules
+- **No default exports** — Always use named exports
+- **No barrel files in modules** — Import directly from source
+- **Avoid circular imports** — Use interface tokens for DI
+- **Prefer nearest valid relative path** — Do not climb higher than necessary or reintroduce project-wide aliases
+
+---
+
+## 7) COMMENTS & DOCUMENTATION
+
+### When to Comment
+- **Complex business logic** — Explain the "why", not the "what"
+- **Workarounds** — Link to issue/ticket
+- **Shared/public utilities** — JSDoc when the behavior is non-obvious or reused across modules
+
+### Comment Patterns
+```typescript
+// ✅ CORRECT: Explains business rule
+// Users with pending status cannot be deleted until 30 days after creation
+// See: JIRA-1234
+if (user.status === 'pending' && daysSinceCreation < 30) {
+  throw UserException.cannotDelete();
+}
+
+// ❌ WRONG: States the obvious
+// Check if user exists
+if (!user) {
+  throw UserException.notFound();
+}
+```
+
+### JSDoc for Public APIs
+```typescript
+/**
+ * Creates a user-facing output model from an internal entity.
+ * 
+ * @param entity - Domain entity from the datasource layer
+ * @returns Serialized output model for controller responses
+ */
+static fromEntity(entity: UserEntity): UserOutput {
+  // ...
+}
+```
+
+### TODO Comments
+```typescript
+// TODO(username): Implement caching - JIRA-5678
+// FIXME: This is a temporary workaround for timezone issue
+// HACK: Remove after API v2 migration
+```
+
+---
+
+## 8) ASYNC/AWAIT
+
+### Rules
+- **Always use async/await** — Avoid `.then()` chains
+- **Handle errors with try/catch** — Or let them propagate to global filter
+- **Parallel execution** — Use `Promise.all()` when operations are independent
+
+```typescript
+// ✅ CORRECT: async/await
+async function processOrder(orderId: string) {
+  const order = await this.orderDatasource.findById(orderId);
+  if (!order) throw OrderException.notFound();
+  
+  const result = await this.paymentService.process(order);
+  return result;
+}
+
+// ✅ CORRECT: Parallel execution
+async function getUserWithPosts(userId: string) {
+  const [user, posts] = await Promise.all([
+    this.userDatasource.findById(userId),
+    this.postDatasource.findByUserId(userId),
+  ]);
+  return { user, posts };
+}
+
+// ❌ WRONG: .then() chain
+function processOrder(orderId: string) {
+  return this.orderDatasource.findById(orderId)
+    .then(order => {
+      if (!order) throw OrderException.notFound();
+      return this.paymentService.process(order);
+    })
+    .then(result => result);
+}
+```
+
+### Avoid
+- ❌ Mixing async/await with .then()
+- ❌ Sequential await when parallel is possible
+
+---
+
+## 9) API CONTRACT
+
+- `openapi/openapi.yaml` is the only canonical API contract file.
+- Do not create parallel API documentation artifacts by default.
+- Current repo uses Scalar and it must render from the OpenAPI document.
+- If another renderer is introduced later, it must still consume the OpenAPI document.
+- If Bruno is used, it must import or sync from the OpenAPI document.
+- Do not introduce Swagger helper files or response-definition arrays as a second source of truth in OpenAPI-first projects.
+
+---
+
+## 10) ERROR MESSAGES
+
+### Consistent Format
+```typescript
+// constants/error-code.constant.ts
+export const ERROR_CODE = {
+  // Numeric namespace by concern
+  VALIDATE_ERROR: 100422,
+  UNAUTHORIZED: 101401,
+  USER_NOT_FOUND: 102404,
+  USER_SUSPENDED: 102400,
+} as const;
+
+// constants/error-message.constant.ts
+export const ERROR_MESSAGE = {
+  [ERROR_CODE.VALIDATE_ERROR]: 'Validation failed',
+  [ERROR_CODE.UNAUTHORIZED]: 'Unauthorized',
+  [ERROR_CODE.USER_NOT_FOUND]: 'User not found',
+  [ERROR_CODE.USER_SUSPENDED]: 'User account is suspended',
+} as const;
+```
+
+### Exception Pattern
+```typescript
+// modules/user/exceptions/user.exception.ts
+import { HttpStatus } from '@nestjs/common';
+import { ERROR_CODE } from '../../../constants/error-code.constant';
+import { AppException } from '../../../shared/exceptions/app.exception';
+
+export class UserException {
+  static notFound(): never {
+    throw new AppException({
+      errorCode: ERROR_CODE.USER_NOT_FOUND,
+      statusCode: HttpStatus.NOT_FOUND,
+    });
+  }
+
+  static userSuspended(): never {
+    throw new AppException({
+      errorCode: ERROR_CODE.USER_SUSPENDED,
+      statusCode: HttpStatus.BAD_REQUEST,
+    });
+  }
+}
+```
+
+**Rules:**
+- Use `: never` return type (function throws, never returns)
+- Use `throw` directly, NOT `return new Exception()`
+- Use `AppException` for consistent error format
+
+### i18n-Ready Structure
+```typescript
+// For future i18n support, use placeholders
+import { ERROR_CODE } from './error-code.constant';
+
+export const ERROR_MESSAGE = {
+  [ERROR_CODE.USER_NOT_FOUND]: 'User {{userId}} not found',
+  [ERROR_CODE.USER_SUSPENDED]: 'User {{userId}} is suspended',
+} as const;
+```
+
+---
+
+## 11) TYPESCRIPT STRICT MODE
+
+### Important tsconfig Settings
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "useUnknownInCatchVariables": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
+```
+
+**Rule:** อย่าลดความเข้มของ strict settings เพื่อแก้ error เฉพาะจุด ให้แก้ types หรือ control flow ให้ชัดแทน
+
+### Handling Nullable Values
+```typescript
+// ✅ CORRECT: Explicit null check
+const user = await this.datasource.findById(id);
+if (!user) throw UserException.notFound();
+// user is now non-null
+
+// ✅ CORRECT: Optional chaining with nullish coalescing
+const name = user?.profile?.name ?? 'Anonymous';
+
+// ❌ WRONG: Type assertion without check
+const user = await this.datasource.findById(id) as UserEntity;
+```
+
+### Avoid Type Assertions
+```typescript
+// ✅ CORRECT: Type guard
+function isUser(obj: unknown): obj is UserEntity {
+  return obj !== null && typeof obj === 'object' && 'id' in obj;
+}
+
+// ❌ WRONG: Unsafe assertion
+const user = data as UserEntity;
+```
+
+### Explicit Return Types
+```typescript
+// ✅ CORRECT: Explicit return type
+async findById(id: string): Promise<UserEntity | null> {
+  return this.datasource.findById(id);
+}
+
+// ❌ WRONG: Implicit return type
+async findById(id: string) {
+  return this.datasource.findById(id);
+}
+```
+
+---
+
 *End of Coding Standards*

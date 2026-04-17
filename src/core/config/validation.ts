@@ -1,10 +1,23 @@
-import * as Joi from 'joi';
+import { z } from 'zod';
 
-export default Joi.object({
-  NODE_ENV: Joi.string()
-    .valid('local', 'develop', 'staging', 'uat', 'production', 'test')
-    .default('local'),
-  APP_HOST: Joi.string().default('localhost'),
-  APP_PORT: Joi.number().default(3000),
-  APP_NAME: Joi.string().required(),
+import {
+  envIntegerSchema,
+  envStringSchema,
+  requiredEnvStringSchema,
+} from './utils/validate-config.util';
+
+const coreValidationSchema = z.object({
+  NODE_ENV: z.enum(['local', 'develop', 'staging', 'uat', 'production', 'test']).default('local'),
+  APP_HOST: envStringSchema('localhost'),
+  APP_PORT: envIntegerSchema(3000, 1),
+  APP_NAME: requiredEnvStringSchema,
 });
+
+export function validateCoreConfig(config: Record<string, unknown>) {
+  const validatedCoreConfig = coreValidationSchema.parse(config);
+
+  return {
+    ...config,
+    ...validatedCoreConfig,
+  };
+}

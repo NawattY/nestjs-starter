@@ -1,16 +1,32 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { UserController } from '#modules/user/controllers/user.controller';
-import { UserService } from '#modules/user/services/user.service';
-import { JwtAuthGuard } from '#modules/auth/guards/jwt-auth.guard';
+import type { INestApplication } from '@nestjs/common';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import request from 'supertest';
+
+import { JwtAuthGuard } from '../src/core/auth/jwt-auth.guard';
+import { UserController } from '../src/modules/user/api/controllers/user.controller';
+import { UserService } from '../src/modules/user/application/user.service';
+import { ROUTES } from '../src/routes/app-routes.constant';
+
+function getHttpServer(app: INestApplication): Parameters<typeof request>[0] {
+  return app.getHttpServer() as unknown as Parameters<typeof request>[0];
+}
 
 describe('UserController (e2e)', () => {
   let app: INestApplication;
   const mockUserService = {
     findAll: jest.fn().mockResolvedValue({
       items: [
-        { id: '1', email: 'a', mobile: '1', fullName: 'A', isActive: true },
+        {
+          id: '1',
+          email: 'a@b.com',
+          mobile: '1',
+          firstName: 'Alice',
+          lastName: 'Doe',
+          status: 'active',
+          createdAt: '2025-01-15T10:30:00.000Z',
+          updatedAt: '2025-01-15T10:30:00.000Z',
+        },
       ],
       meta: {
         itemCount: 1,
@@ -40,13 +56,23 @@ describe('UserController (e2e)', () => {
     await app.close();
   });
 
-  it('/users (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/users')
+  it('/v1/users (GET)', () => {
+    return request(getHttpServer(app))
+      .get(`/${ROUTES.V1.USER.ROOT}`)
+      .set('Authorization', 'Bearer token')
       .expect(200)
       .expect({
         items: [
-          { id: '1', email: 'a', mobile: '1', fullName: 'A', isActive: true },
+          {
+            id: '1',
+            email: 'a@b.com',
+            mobile: '1',
+            firstName: 'Alice',
+            lastName: 'Doe',
+            status: 'active',
+            createdAt: '2025-01-15T10:30:00.000Z',
+            updatedAt: '2025-01-15T10:30:00.000Z',
+          },
         ],
         meta: {
           itemCount: 1,

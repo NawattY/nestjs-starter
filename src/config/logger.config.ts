@@ -1,17 +1,16 @@
-
-import { validateAndTransformConfig } from '#core/config/utils/validate-config.util';
 import { registerAs } from '@nestjs/config';
-import { IsOptional, IsString } from 'class-validator';
+import { z } from 'zod';
 
-class EnvironmentVariables {
-  @IsString()
-  @IsOptional()
-  LOG_LEVEL: string = 'debug';
+import {
+  envBooleanSchema,
+  envStringSchema,
+  validateAndTransformConfig,
+} from '../core/config/utils/validate-config.util';
 
-  @IsString()
-  @IsOptional()
-  LOG_PRETTY: string = 'true';
-}
+const loggerConfigSchema = z.object({
+  LOG_LEVEL: envStringSchema('debug'),
+  LOG_PRETTY: envBooleanSchema.default(true),
+});
 
 export interface LoggerConfig {
   level: string;
@@ -19,19 +18,17 @@ export interface LoggerConfig {
 }
 
 export const loggerConfiguration = registerAs('logger', (): LoggerConfig => {
-  const rawConfig = {
-    LOG_LEVEL: process.env.LOG_LEVEL ?? 'debug',
-    LOG_PRETTY: process.env.LOG_PRETTY ?? 'true',
-  };
-
   const validated = validateAndTransformConfig(
-    EnvironmentVariables,
-    rawConfig,
+    loggerConfigSchema,
+    {
+      LOG_LEVEL: process.env.LOG_LEVEL ?? 'debug',
+      LOG_PRETTY: process.env.LOG_PRETTY,
+    },
     'Logger Config',
   );
 
   return {
     level: validated.LOG_LEVEL,
-    isPretty: validated.LOG_PRETTY === 'true',
+    isPretty: validated.LOG_PRETTY,
   };
 });

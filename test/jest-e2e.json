@@ -4,9 +4,24 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
-  },
-  "moduleNameMapper": {
-    "^#(.*)$": "<rootDir>/../src/$1"
+    "^.+\\.(t|j)s$": [
+      "@swc/jest",
+      {
+        "sourceMaps": "inline",
+        "module": {
+          "type": "commonjs"
+        },
+        "jsc": {
+          "parser": {
+            "syntax": "typescript",
+            "decorators": true
+          },
+          "transform": {
+            "legacyDecorator": true,
+            "decoratorMetadata": true
+          }
+        }
+      }
+    ]
   }
 }

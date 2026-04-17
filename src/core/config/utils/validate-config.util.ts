@@ -1,49 +1,81 @@
-import { plainToInstance, ClassConstructor } from 'class-transformer';
-import { validateSync, ValidatorOptions } from 'class-validator';
+import type { StringValue as MsStringValue } from 'ms';
+import ms from 'ms';
+import { z, ZodError } from 'zod';
 
-/**
- * Validates a raw configuration object against a validation class.
- * @param ConfigValidationClass The class with class-validator decorators.
- * @param rawConfigValues The raw configuration values (e.g., from process.env).
- * @param configNamespace A namespace string for more descriptive error messages.
- * @param classTransformerOptions Options for plainToInstance.
- * @param validatorOptions Options for validateSync.
- * @returns The validated and potentially transformed configuration object.
- * @throws Error if validation fails.
- */
-export function validateAndTransformConfig<T extends object>(
-  ConfigValidationClass: ClassConstructor<T>, // Class ที่มี Decorators สำหรับ Validate
-  rawConfigValues: Record<string, any>, // Object ของค่า Config ดิบๆ
-  configNamespace: string = 'Configuration', // ชื่อ Namespace สำหรับ Error Message
-  classTransformerOptions?: Parameters<typeof plainToInstance>[2], // Options สำหรับ plainToInstance
-  validatorOptions?: ValidatorOptions, // Options สำหรับ validateSync
-): T {
-  const instanceToValidate = plainToInstance(
-    ConfigValidationClass,
-    rawConfigValues,
-    {
-      enableImplicitConversion: true, // เปิดใช้งานการแปลง Type อัตโนมัติโดยปริยาย
-      ...classTransformerOptions, // สามารถ Override หรือเพิ่ม Options ได้
-    },
-  );
-
-  const errors = validateSync(instanceToValidate, {
-    skipMissingProperties: false, // ไม่ข้าม Property ที่หายไป (ถ้าต้องการให้ Strict)
-    ...validatorOptions, // สามารถ Override หรือเพิ่ม Options ได้
-  });
-
-  if (errors.length > 0) {
-    const messages = errors
-      .map((err) => {
-        // ตรวจสอบว่า err.constraints ไม่ใช่ undefined ก่อนเรียก Object.values
-        const constraintMessages = err.constraints
-          ? Object.values(err.constraints).join(', ')
-          : 'No constraints message';
-        return `${err.property}: ${constraintMessages}`;
-      })
-      .join('; ');
-    throw new Error(`[${configNamespace}] Validation failed: ${messages}`);
+function emptyStringToUndefined(value: unknown): unknown {
+  if (typeof value === 'string' && value.trim() === '') {
+    return undefined;
   }
 
-  return instanceToValidate; // คืนค่า Object ที่ผ่านการ Validate และ Transform แล้ว
+  return value;
+}
+
+export const requiredEnvStringSchema = z.string().trim().min(1);
+
+export function envStringSchema(defaultValue: string) {
+  return z.string().trim().default(defaultValue);
+}
+
+export const optionalEnvStringSchema = z.preprocess(
+  emptyStringToUndefined,
+  z.string().trim().min(1).optional(),
+);
+
+export function envIntegerSchema(defaultValue: number, minimumValue = 0) {
+  return z.coerce.number().int().gte(minimumValue).default(defaultValue);
+}
+
+export const envBooleanSchema = z.preprocess((value) => {
+  if (typeof value === 'string') {
+    const normalizedValue = value.trim().toLowerCase();
+
+    if (['true', '1', 'yes', 'on'].includes(normalizedValue)) {
+      return true;
+    }
+
+    if (['false', '0', 'no', 'off'].includes(normalizedValue)) {
+      return false;
+    }
+  }
+
+  return value;
+}, z.boolean());
+
+export function envMsDurationSchema(defaultValue: MsStringValue) {
+  return z
+    .string()
+    .trim()
+    .default(defaultValue)
+    .refine((value) => {
+      try {
+        const milliseconds = ms(value as MsStringValue);
+        return typeof milliseconds === 'number' && !Number.isNaN(milliseconds);
+      } catch {
+        return false;
+      }
+    }, 'Must be a valid ms duration string (for example "1h" or "30d")')
+    .transform((value) => value as MsStringValue);
+}
+
+export function validateAndTransformConfig<T>(
+  schema: z.ZodType<T>,
+  rawConfigValues: Record<string, unknown>,
+  configNamespace: string = 'Configuration',
+): T {
+  try {
+    return schema.parse(rawConfigValues);
+  } catch (error: unknown) {
+    if (error instanceof ZodError) {
+      const messages = error.issues
+        .map((issue) => {
+          const path = issue.path.length > 0 ? issue.path.join('.') : 'root';
+          return `${path}: ${issue.message}`;
+        })
+        .join('; ');
+
+      throw new Error(`[${configNamespace}] Validation failed: ${messages}`);
+    }
+
+    throw error;
+  }
 }

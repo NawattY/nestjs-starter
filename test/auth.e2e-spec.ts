@@ -1,25 +1,36 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { AuthController } from '#modules/auth/controllers/auth.controller';
-import { AuthService } from '#modules/auth/services/auth.service';
-import { JwtAuthGuard } from '#modules/auth/guards/jwt-auth.guard';
-import { UserEntity } from '#modules/user/entities/user.entity';
+import type { ExecutionContext, INestApplication } from '@nestjs/common';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import request from 'supertest';
+
+import { JwtAuthGuard } from '../src/core/auth/jwt-auth.guard';
+import type { JwtPayload } from '../src/core/auth/jwt-payload.interface';
+import { AuthController } from '../src/modules/auth/api/controllers/auth.controller';
+import { AuthService } from '../src/modules/auth/application/auth.service';
+import { ROUTES } from '../src/routes/app-routes.constant';
+
+function getHttpServer(app: INestApplication): Parameters<typeof request>[0] {
+  return app.getHttpServer() as unknown as Parameters<typeof request>[0];
+}
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
   const mockAuthService = {
-    login: jest.fn().mockResolvedValue({
+    loginWithPassword: jest.fn().mockResolvedValue({
       accessToken: 'token',
       refreshToken: 'refresh',
-      userId: '1',
     }),
     refresh: jest.fn().mockResolvedValue({
       accessToken: 'new',
       refreshToken: 'refresh',
-      userId: '1',
     }),
-    revoke: jest.fn().mockResolvedValue(undefined),
+    logout: jest.fn().mockResolvedValue(undefined),
+    getUserById: jest.fn().mockResolvedValue({
+      id: '1',
+      email: 'a@b.com',
+      fullName: 'A',
+      isActive: true,
+    }),
   };
 
   beforeAll(async () => {
@@ -29,15 +40,11 @@ describe('AuthController (e2e)', () => {
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({
-        canActivate: (context: import('@nestjs/common').ExecutionContext) => {
-          const req = context
-            .switchToHttp()
-            .getRequest<{ user?: Partial<UserEntity> }>();
+        canActivate: (context: ExecutionContext) => {
+          const req = context.switchToHttp().getRequest<{ user?: JwtPayload }>();
           req.user = {
-            id: '1',
-            email: 'a@b.com',
-            fullName: 'A',
-            isActive: true,
+            uid: '1',
+            sid: 'session-1',
           };
           return true;
         },
@@ -52,46 +59,40 @@ describe('AuthController (e2e)', () => {
     await app.close();
   });
 
-  it('/auth/login (POST)', () => {
-    return request(app.getHttpServer())
-      .post('/auth/login')
+  it('/v1/auth/login (POST)', () => {
+    return request(getHttpServer(app))
+      .post(`/${ROUTES.V1.AUTH.ROOT}/${ROUTES.V1.AUTH.LOGIN}`)
       .send({ username: 'a', password: 'b' })
       .expect(201)
-      .expect({ accessToken: 'token', refreshToken: 'refresh', userId: '1' });
+      .expect({ accessToken: 'token', refreshToken: 'refresh' });
   });
 
-  it('/auth/me (GET)', () => {
-    const user: UserEntity = {
-      id: '1',
-      email: 'a@b.com',
-      password: 'hash',
-      fullName: 'A',
-      isActive: true,
-      mobile: '1',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    return request(app.getHttpServer()).get('/auth/me').expect(200).expect({
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      isActive: user.isActive,
-    });
+  it('/v1/auth/me (GET)', () => {
+    return request(getHttpServer(app))
+      .get(`/${ROUTES.V1.AUTH.ROOT}/${ROUTES.V1.AUTH.ME}`)
+      .set('Authorization', 'Bearer token')
+      .expect(200)
+      .expect({
+        id: '1',
+        email: 'a@b.com',
+        fullName: 'A',
+        isActive: true,
+      });
   });
 
-  it('/auth/refresh (POST)', () => {
-    return request(app.getHttpServer())
-      .post('/auth/refresh')
+  it('/v1/auth/refresh (POST)', () => {
+    return request(getHttpServer(app))
+      .post(`/${ROUTES.V1.AUTH.ROOT}/${ROUTES.V1.AUTH.REFRESH}`)
       .send({ refreshToken: 'refresh' })
       .expect(201)
-      .expect({ accessToken: 'new', refreshToken: 'refresh', userId: '1' });
+      .expect({ accessToken: 'new', refreshToken: 'refresh' });
   });
 
-  it('/auth/revoke (POST)', () => {
-    return request(app.getHttpServer())
-      .post('/auth/revoke')
-      .send({ refreshToken: 'refresh' })
-      .expect(201)
+  it('/v1/auth/logout (POST)', () => {
+    return request(getHttpServer(app))
+      .post(`/${ROUTES.V1.AUTH.ROOT}/${ROUTES.V1.AUTH.LOGOUT}`)
+      .set('Authorization', 'Bearer token')
+      .expect(204)
       .expect('');
   });
 });

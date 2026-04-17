@@ -1,11 +1,9 @@
-import {
-  BadRequestException,
-  ValidationPipe,
-  ValidationPipeOptions,
-} from '@nestjs/common';
-import { ValidationError } from 'class-validator';
-import { ERROR_CODE } from '#constants/error-code.constant';
-import { ERROR_MESSAGE } from '#constants/error-message.constant';
+import type { ValidationPipeOptions } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import type { ValidationError } from 'class-validator';
+
+import { ERROR_CODE } from '../../constants/error-code.constant';
+import { ERROR_MESSAGE } from '../../constants/error-message.constant';
 
 export function createValidationPipe(options?: ValidationPipeOptions) {
   return new ValidationPipe({
@@ -26,8 +24,7 @@ export function createValidationPipe(options?: ValidationPipeOptions) {
 
       return new BadRequestException({
         errorCode: ERROR_CODE.VALIDATE_ERROR,
-        errorMessage:
-          ERROR_MESSAGE[ERROR_CODE.VALIDATE_ERROR] ?? 'VALIDATE ERROR',
+        errorMessage: ERROR_MESSAGE[ERROR_CODE.VALIDATE_ERROR] ?? 'VALIDATE ERROR',
         errors,
       });
     },

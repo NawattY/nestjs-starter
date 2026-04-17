@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import type { SignOptions } from 'jsonwebtoken';
 import * as jwt from 'jsonwebtoken';
-import { CoreConfigService } from '#core/config/config.service';
-import { AuthConfig } from '#config/auth.config';
+
+import { AuthConfig } from '../../config/auth.config';
+import { CoreConfigService } from '../config/config.service';
 import { BaseJwtPayload } from './jwt-base-payload.interface';
 
 @Injectable()
@@ -21,18 +23,24 @@ export class JwtService {
   }
 
   signAccess(payload: BaseJwtPayload, ttl = '15m') {
-    return jwt.sign(payload, this.accessSecret, { expiresIn: this.accessTtl });
+    const expiresIn = ttl || this.accessTtl;
+    return jwt.sign(payload, this.accessSecret, {
+      expiresIn: expiresIn as SignOptions['expiresIn'],
+    });
   }
 
-  signRefresh(payload: any, ttl = '30d') {
-    return jwt.sign(payload, this.refreshSecret, { expiresIn: this.refreshTtl });
+  signRefresh(payload: BaseJwtPayload, ttl = '30d') {
+    const expiresIn = ttl || this.refreshTtl;
+    return jwt.sign(payload, this.refreshSecret, {
+      expiresIn: expiresIn as SignOptions['expiresIn'],
+    });
   }
 
-  verifyAccess(token: string) {
-    return jwt.verify(token, this.accessSecret);
+  verifyAccess(token: string): BaseJwtPayload {
+    return jwt.verify(token, this.accessSecret) as BaseJwtPayload;
   }
 
-  verifyRefresh(token: string) {
-    return jwt.verify(token, this.refreshSecret);
+  verifyRefresh(token: string): BaseJwtPayload {
+    return jwt.verify(token, this.refreshSecret) as BaseJwtPayload;
   }
 }

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+
 import { CacheAdapter } from './interfaces/cache.interface';
 
 @Injectable()

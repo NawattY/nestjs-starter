@@ -1,0 +1,465 @@
+openapi: 3.1.0
+info:
+  title: NestJS Starter API
+  version: 1.0.0
+  description: AI-first OpenAPI contract for the NestJS starter project.
+servers:
+  - url: /api
+    description: Application API base path
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: User
+    description: User management endpoints
+paths:
+  /v1/auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Password login
+      description: Login with password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: '0990090099'
+              password: '123456'
+      responses:
+        '200':
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                accessToken: access-token-example
+                refreshToken: refresh-token-example
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /v1/auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshToken
+      summary: Auth login by refresh token
+      description: Get a new access token using a refresh token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+            example:
+              refreshToken: KdV1rYiLXijW5rHDOlHQylMB8VIaFIArMTvb9Zbr4ZJwjwwkuxx3ZZ1AzyKUu0hP
+      responses:
+        '200':
+          description: Token refreshed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                accessToken: renewed-access-token-example
+                refreshToken: renewed-refresh-token-example
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/InvalidRefreshTokenError'
+  /v1/auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Auth logout
+      description: Logout the current session.
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logout successful.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /v1/auth/me:
+    get:
+      tags: [Auth]
+      operationId: getCurrentAuthUser
+      summary: Get current user
+      description: Get current authenticated user information.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User info retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+              example:
+                id: user-123
+                email: user@example.com
+                fullName: John Doe
+                isActive: true
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /v1/users:
+    get:
+      tags: [User]
+      operationId: getUsers
+      summary: Get users list
+      description: Retrieve a paginated list of users.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - in: query
+          name: perPage
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 30
+          example: 30
+      responses:
+        '200':
+          description: Users retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+              example:
+                items:
+                  - id: user-123
+                    mobile: '0990090099'
+                    email: user@example.com
+                    firstName: John
+                    lastName: Doe
+                    status: active
+                    createdAt: '2024-01-01T00:00:00.000Z'
+                    updatedAt: '2024-01-02T00:00:00.000Z'
+                meta:
+                  totalItems: 1
+                  itemCount: 1
+                  itemsPerPage: 30
+                  totalPages: 1
+                  currentPage: 1
+                links:
+                  first: /api/v1/users?page=1&perPage=30
+                  previous: null
+                  next: null
+                  last: /api/v1/users?page=1&perPage=30
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /v1/users/me:
+    get:
+      tags: [User]
+      operationId: getMe
+      summary: Get current user profile
+      description: Retrieve the profile of the currently authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              example:
+                id: user-123
+                mobile: '0990090099'
+                email: user@example.com
+                firstName: John
+                lastName: Doe
+                status: active
+                createdAt: '2024-01-01T00:00:00.000Z'
+                updatedAt: '2024-01-02T00:00:00.000Z'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    patch:
+      tags: [User]
+      operationId: updateMe
+      summary: Update current user profile
+      description: Update the profile of the currently authenticated user.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+            example:
+              email: user@example.com
+              firstName: John
+              lastName: Doe
+      responses:
+        '200':
+          description: User profile updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              example:
+                id: user-123
+                mobile: '0990090099'
+                email: user@example.com
+                firstName: John
+                lastName: Doe
+                status: active
+                createdAt: '2024-01-01T00:00:00.000Z'
+                updatedAt: '2024-01-02T00:00:00.000Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    ValidationError:
+      description: Validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errorCode: 100422
+            errorMessage: Validation failed
+            errors:
+              username:
+                - username should not be empty
+    UnauthorizedError:
+      description: Unauthorized.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errorCode: 101401
+            errorMessage: Unauthorized
+    InvalidRefreshTokenError:
+      description: Invalid refresh token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errorCode: 101000
+            errorMessage: Invalid refresh token
+  schemas:
+    LoginRequest:
+      type: object
+      required: [username, password]
+      example:
+        username: '0990090099'
+        password: '123456'
+      properties:
+        username:
+          type: string
+          example: '0990090099'
+        password:
+          type: string
+          example: '123456'
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      example:
+        refreshToken: KdV1rYiLXijW5rHDOlHQylMB8VIaFIArMTvb9Zbr4ZJwjwwkuxx3ZZ1AzyKUu0hP
+      properties:
+        refreshToken:
+          type: string
+          example: KdV1rYiLXijW5rHDOlHQylMB8VIaFIArMTvb9Zbr4ZJwjwwkuxx3ZZ1AzyKUu0hP
+    UpdateUserRequest:
+      type: object
+      example:
+        email: user@example.com
+        firstName: John
+        lastName: Doe
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        firstName:
+          type: string
+          maxLength: 100
+          example: John
+        lastName:
+          type: string
+          maxLength: 100
+          example: Doe
+    AuthResponse:
+      type: object
+      required: [accessToken, refreshToken]
+      example:
+        accessToken: access-token-example
+        refreshToken: refresh-token-example
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+    MeResponse:
+      type: object
+      required: [id, fullName, isActive]
+      example:
+        id: user-123
+        email: user@example.com
+        fullName: John Doe
+        isActive: true
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        fullName:
+          type: string
+        isActive:
+          type: boolean
+    UserResponse:
+      type: object
+      required: [id, mobile, status, createdAt, updatedAt]
+      example:
+        id: user-123
+        mobile: '0990090099'
+        email: user@example.com
+        firstName: John
+        lastName: Doe
+        status: active
+        createdAt: '2024-01-01T00:00:00.000Z'
+        updatedAt: '2024-01-02T00:00:00.000Z'
+      properties:
+        id:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        status:
+          type: string
+          example: active
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PaginationMeta:
+      type: object
+      required: [totalItems, itemCount, itemsPerPage, totalPages, currentPage]
+      example:
+        totalItems: 1
+        itemCount: 1
+        itemsPerPage: 30
+        totalPages: 1
+        currentPage: 1
+      properties:
+        totalItems:
+          type: integer
+          example: 1
+        itemCount:
+          type: integer
+          example: 1
+        itemsPerPage:
+          type: integer
+          example: 30
+        totalPages:
+          type: integer
+          example: 1
+        currentPage:
+          type: integer
+          example: 1
+    PaginationLinks:
+      type: object
+      example:
+        first: /api/v1/users?page=1&perPage=30
+        previous: null
+        next: null
+        last: /api/v1/users?page=1&perPage=30
+      properties:
+        first:
+          type: string
+        previous:
+          type: string
+          nullable: true
+        next:
+          type: string
+          nullable: true
+        last:
+          type: string
+    UserListResponse:
+      type: object
+      required: [items, meta]
+      example:
+        items:
+          - id: user-123
+            mobile: '0990090099'
+            email: user@example.com
+            firstName: John
+            lastName: Doe
+            status: active
+            createdAt: '2024-01-01T00:00:00.000Z'
+            updatedAt: '2024-01-02T00:00:00.000Z'
+        meta:
+          totalItems: 1
+          itemCount: 1
+          itemsPerPage: 30
+          totalPages: 1
+          currentPage: 1
+        links:
+          first: /api/v1/users?page=1&perPage=30
+          previous: null
+          next: null
+          last: /api/v1/users?page=1&perPage=30
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponse'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+    ErrorResponse:
+      type: object
+      required: [errorCode, errorMessage]
+      example:
+        errorCode: 100422
+        errorMessage: Validation failed
+        errors:
+          username:
+            - username should not be empty
+      properties:
+        errorCode:
+          type: integer
+        errorMessage:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
