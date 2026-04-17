@@ -1,4 +1,4 @@
-import { PaginatedResultInterface } from '#shared/interfaces/paginated-result.interface';
+import { PaginatedResultInterface } from '@app/shared/interfaces/paginated-result.interface';
 
 interface PrismaPaginateOptions<Domain, Where = any, Order = any> {
   page: number;

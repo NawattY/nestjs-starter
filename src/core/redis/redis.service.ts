@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { createClient, RedisClientType } from 'redis';
-import { CoreConfigService } from '#core/config/config.service';
-import { LoggerService } from '#core/logger/services/logger.service';
-import { RedisConfig } from '#config/redis.config';
+import { CoreConfigService } from '@app/core/config/config.service';
+import { LoggerService } from '@app/core/logger/services/logger.service';
+import { RedisConfig } from '@app/config/redis.config';
 
 @Injectable()
 export class RedisService {

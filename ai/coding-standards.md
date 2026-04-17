@@ -105,7 +105,7 @@ it('should return user balance', async () => {
 Imports must be organized in the following order, separated by blank lines:
 
 1. **External packages** (node_modules)
-2. **Internal aliases** (#modules, #core, #shared)
+2. **Internal aliases** (@app/*)
 3. **Relative imports** (./, ../)
 
 ```typescript

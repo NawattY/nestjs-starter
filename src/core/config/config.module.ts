@@ -1,8 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
+
+import { appConfigurations } from '@app/config';
+
 import { CoreConfigService } from './config.service';
-import coreValidationSchema from './validation'; // Schema สำหรับ validate core ENV vars
-import appConfigs from '../../config'; // โหลด Array ของ registerAs functions จาก src/config/index.ts
+import { coreValidationSchema } from './validation';
 
 @Global()
 @Module({
@@ -16,8 +18,8 @@ import appConfigs from '../../config'; // โหลด Array ของ registerA
         `.env.${process.env.NODE_ENV}`, // e.g., .env.development
         '.env', // ไฟล์ .env หลัก
       ],
-      validationSchema: coreValidationSchema, // Validate core ENV vars ที่ boilerplate คาดหวัง
-      load: appConfigs, // โหลดและ register project-specific typed configurations
+      validationSchema: coreValidationSchema,
+      load: appConfigurations,
       cache: true, // (Optional) เปิดใช้งาน caching สำหรับ config ที่โหลดแล้ว
     }),
   ],

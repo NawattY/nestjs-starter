@@ -1,5 +1,5 @@
-import { validateAndTransformConfig } from '#core/config/utils/validate-config.util';
-import { IsMsDuration } from '#shared/validators/is-ms-duration.validator';
+import { validateAndTransformConfig } from '@app/core/config/utils/validate-config.util';
+import { IsMsDuration } from '@app/shared/validators/is-ms-duration.validator';
 import { registerAs } from '@nestjs/config';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import * as ms from 'ms';

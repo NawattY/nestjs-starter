@@ -12,50 +12,83 @@ module.exports = {
       },
     },
     {
-      name: 'api-not-imported-by-modules',
+      name: 'datasources-not-depend-on-application-services',
       severity: 'error',
-      comment: 'Modules MUST NOT depend on the API layer',
+      comment: 'Infrastructure datasources MUST NOT depend on application service implementations',
       from: {
-        path: '^src/modules',
+        path: '^src/modules/[^/]+/infrastructure/datasources',
       },
       to: {
-        path: '^src/api',
+        path: '^src/modules/[^/]+/application/.*service',
       },
     },
     {
-      name: 'business-not-imported-by-modules',
+      name: 'api-not-import-domain-or-infrastructure',
       severity: 'error',
-      comment: 'Business layer MUST NOT depend on Modules (Circular Dependency Risk)',
+      comment: 'API layer MUST NOT depend on domain or infrastructure layers directly',
       from: {
-        path: '^src/business',
+        path: '^src/modules/[^/]+/api',
       },
       to: {
-        path: '^src/modules',
-        // Allow importing models if strictly necessary, but prefer decoupling.
-        // For now, strictly forbid any import from modules.
+        path: '^src/modules/[^/]+/(domain|infrastructure)',
       },
     },
     {
-      name: 'datasources-not-depend-on-services',
+      name: 'api-not-import-other-modules',
       severity: 'error',
-      comment: 'Datasources MUST NOT depend on Services',
+      comment: 'API layer MUST NOT depend on other feature modules directly',
       from: {
-        path: '^src/modules/[^/]+/datasources',
-      },
-      to: {
-        path: '^src/modules/[^/]+/services',
-      },
-    },
-    {
-      name: 'no-cross-module-imports',
-      severity: 'error',
-      comment: 'Modules MUST NOT import other modules directly (use Business layer or Events)',
-      from: {
-        path: '^src/modules/([^/]+)',
+        path: '^src/modules/([^/]+)/api',
       },
       to: {
         path: '^src/modules/([^/]+)',
         pathNot: '^src/modules/$1', // Allow internal imports
+      },
+    },
+    {
+      name: 'application-not-import-api-layer',
+      severity: 'error',
+      comment: 'Application layer MUST NOT depend on any API layer',
+      from: {
+        path: '^src/modules/[^/]+/application',
+      },
+      to: {
+        path: '^src/modules/[^/]+/api',
+      },
+    },
+    {
+      name: 'application-not-import-non-application-layers-of-other-modules',
+      severity: 'error',
+      comment: 'Application layer may only depend on another feature module through its application layer',
+      from: {
+        path: '^src/modules/([^/]+)/application',
+      },
+      to: {
+        path: '^src/modules/([^/]+)/(api|domain|infrastructure|exceptions)',
+        pathNot: '^src/modules/$1',
+      },
+    },
+    {
+      name: 'domain-not-import-framework-or-core',
+      severity: 'error',
+      comment: 'Domain layer MUST stay pure and avoid framework, core, config, or database dependencies',
+      from: {
+        path: '^src/modules/[^/]+/domain',
+      },
+      to: {
+        path: '^(src/(core|config|database)|@nestjs|@prisma|class-transformer|class-validator|nestjs-cls)',
+      },
+    },
+    {
+      name: 'domain-and-infrastructure-not-import-other-modules',
+      severity: 'error',
+      comment: 'Domain and infrastructure layers MUST NOT depend on other feature modules directly',
+      from: {
+        path: '^src/modules/([^/]+)/(domain|infrastructure)',
+      },
+      to: {
+        path: '^src/modules/([^/]+)',
+        pathNot: '^src/modules/$1',
       },
     },
   ],

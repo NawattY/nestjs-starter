@@ -9,272 +9,98 @@ Align the current NestJS codebase with:
 
 This plan is intentionally split into phases so the migration can be executed across multiple chat rounds without overflowing context or leaving the repository in an unstable half-migrated state.
 
-## Current Baseline
-
-### Structural gaps found
-
-1. API controllers live under `src/api/v1/...` instead of `src/modules/{module}/api/...`.
-2. Route constants do not exist yet; controllers hardcode paths and versions.
-3. Module internals are not separated into `api`, `application`, `domain`, and `infrastructure` layers.
-4. Datasources inject `PrismaService` directly instead of `TransactionHost<TransactionalAdapterPrisma>`.
-5. `src/business/...` currently contains rules coupled to Prisma, which conflicts with the target modular architecture.
-6. DTO immutability is inconsistent; many DTO fields are not `readonly`.
-7. Controller-to-service boundaries are loose; some controller code maps DTOs directly into service payloads without an explicit application input boundary.
-8. The repository currently uses the `#* -> src/*` path alias, while the architecture document examples also mention `@app/*`.
-9. Some tests appear stale relative to the current folder structure, so test updates should be planned as part of the migration rather than treated as incidental breakage.
-10. The application currently uses `VersioningType.URI` in `src/main.ts`, while the architecture document examples show route constants that already include `v1/...`; this must be reconciled before route centralization starts.
-
-### Representative files
-
-- `src/api/v1/auth/controllers/auth.controller.ts`
-- `src/api/v1/user/controllers/user.controller.ts`
-- `src/api/v1/api.module.ts`
-- `src/modules/auth/auth.module.ts`
-- `src/modules/user/user.module.ts`
-- `src/modules/auth/services/auth.service.ts`
-- `src/modules/user/services/user.service.ts`
-- `src/modules/auth/datasources/auth.prisma.datasource.ts`
-- `src/modules/user/datasources/user.prisma.datasource.ts`
-- `src/business/rules/user-modification.rule.ts`
-- `test/auth.e2e-spec.ts`
-- `test/user.e2e-spec.ts`
-
-## Migration Principles
-
-1. Keep each phase releasable on its own.
-2. Prefer low-risk foundation work before folder moves.
-3. Do not mix route refactors, folder moves, and transaction rewrites in one round unless the slice is very small.
-4. Validate touched files with lint/tests in the same phase.
-5. Migrate module-by-module where possible, starting with `auth` and `user`.
-
-## Phase 0: Lock Conventions Before Refactor
-
-### Goal
-
-Resolve ambiguities in the target conventions before changing runtime code.
-
-### Tasks
-
-1. Decide the canonical import alias for the project.
-   - Option A: keep `#...` and adapt the docs locally.
-   - Option B: migrate repo-wide to `@app/*`.
-2. Confirm whether `src/business/...` should be removed entirely or retained only for truly shared domain rules.
-3. Confirm whether the migration will preserve current HTTP paths exactly while internal structure changes.
-4. Confirm whether `nestjs-cls` transaction support should be introduced now or deferred until after the folder restructuring.
-5. Decide the route constant format under URI versioning.
-  - Option A: route constants store only resource paths like `auth`, `users`, `me` and keep Nest URI versioning.
-  - Option B: route constants store `v1/...` and the app stops using URI versioning.
-
-### Exit criteria
-
-1. One canonical alias strategy is chosen.
-2. One target for `src/business/...` is chosen.
-3. One transaction rollout strategy is chosen.
-4. One route/versioning strategy is chosen.
-
-## Phase 1: Route Foundation
-
-### Goal
-
-Remove hardcoded routing from controllers without changing business behavior.
-
-### Tasks
-
-1. Create `src/routes/app-routes.constant.ts`.
-2. Define route constants for current v1 endpoints.
-3. Update all controllers to use route constants instead of hardcoded path strings.
-4. Keep existing external URLs unchanged.
-5. Update Swagger decorators only where required by the route refactor.
-
-### Scope candidates
-
-1. `src/api/v1/auth/controllers/auth.controller.ts`
-2. `src/api/v1/user/controllers/user.controller.ts`
-3. Any controller added later under `src/api/v1/...`
-
-### Verification
-
-1. Lint touched controller and route files.
-2. Run focused controller or e2e tests for auth/user endpoints.
-3. Confirm generated routes still match current API contract.
-
-## Phase 2: API Boundary Cleanup
-
-### Goal
-
-Make the API layer conform more closely to the DTO and application-model rules before moving folders.
-
-### Tasks
-
-1. Add `readonly` to DTO properties where missing.
-2. Ensure controllers convert DTOs into application input models explicitly.
-3. Ensure services do not receive transport DTO classes directly.
-4. Normalize response mapping so controllers return response DTOs and services return application outputs.
-5. Clean up import ordering in touched files.
-
-### Scope candidates
-
-1. `src/api/v1/auth/dtos/**`
-2. `src/api/v1/user/dtos/**`
-3. `src/modules/auth/models/**`
-4. `src/modules/user/models/**`
-5. `src/api/v1/auth/controllers/auth.controller.ts`
-6. `src/api/v1/user/controllers/user.controller.ts`
-
-### Verification
-
-1. Lint all touched DTO, controller, and model files.
-2. Run focused tests for auth and user controllers/services.
-3. Confirm no DTO classes leak into service signatures.
-
-## Phase 3: Feature Folder Restructure Per Module
-
-### Goal
-
-Move each module toward the target 4-layer structure with minimal behavioral change.
-
-### Strategy
-
-Do this one module at a time. Recommended order:
-
-1. `auth`
-2. `user`
-
-### Target structure per module
-
-```text
-src/modules/{module}/
-  api/
-    controllers/
-    dtos/
-    swagger/
-  application/
-  domain/
-    entities/
-    value-objects/
-    enums/
-  infrastructure/
-    datasources/
-  exceptions/
-  {module}.module.ts
-```
-
-### Tasks per module
-
-1. Move controllers from `src/api/v1/{module}/controllers` into `src/modules/{module}/api/controllers`.
-2. Move DTOs into `src/modules/{module}/api/dtos`.
-3. Move Swagger files into `src/modules/{module}/api/swagger`.
-4. Rename `services` to `application`.
-5. Move `entities` into `domain/entities`.
-6. Move datasource files into `infrastructure/datasources`.
-7. Update module imports and `src/api/v1/api.module.ts` wiring.
-8. Remove obsolete folder paths only after references are updated.
-
-### Verification
-
-1. Lint all moved files for the module.
-2. Run unit tests for the module.
-3. Run relevant e2e tests after each module migration.
-4. Confirm Nest module boot still succeeds.
-
-## Phase 4: Infrastructure and Transaction Compliance
-
-### Goal
-
-Bring datasource and transaction handling in line with the architecture rules.
-
-### Tasks
-
-1. Verify or add required transaction packages.
-   - `@nestjs-cls/transactional`
-   - `@nestjs-cls/transactional-adapter-prisma`
-2. Configure CLS transaction support in the application bootstrap/module layer.
-3. Refactor datasource implementations to use `TransactionHost<TransactionalAdapterPrisma>`.
-4. Ensure each datasource exposes a clear entity transformation method.
-5. Remove direct `PrismaService` injection from module datasources.
-6. Decide whether shared helpers like pagination need transaction-aware updates.
-
-### Scope candidates
-
-1. `src/modules/auth/datasources/auth.prisma.datasource.ts`
-2. `src/modules/user/datasources/user.prisma.datasource.ts`
-3. `src/core/database/**`
-4. `src/shared/helpers/prisma-paginate.helper.ts`
-5. `src/app.module.ts`
-
-### Verification
-
-1. Lint all touched infrastructure files.
-2. Run unit/integration tests that exercise datasource methods.
-3. Confirm basic CRUD flows still work.
-
-## Phase 5: Business Rule and Cross-Module Boundary Cleanup
-
-### Goal
-
-Resolve the architectural conflict created by `src/business/...` and enforce cleaner domain ownership.
-
-### Tasks
-
-1. Audit `src/business/rules` and `src/business/exceptions`.
-2. Move module-specific rules into the owning module's domain or application layer.
-3. Keep only truly shared, framework-agnostic logic in a shared location.
-4. Remove direct Prisma-dependent rules from cross-cutting folders.
-5. Add `forwardRef()` only if circular module dependencies actually appear.
-
-### Verification
-
-1. Lint all touched files.
-2. Run unit tests around affected rules/services.
-3. Run dependency analysis if the project relies on `test:arch`.
-
-## Phase 6: Exception, Swagger, and Test Alignment
-
-### Goal
-
-Finish the remaining consistency work after the structure is stable.
-
-### Tasks
-
-1. Standardize exception factories to the documented pattern where still inconsistent.
-2. Ensure Swagger response definitions live inside each module API layer.
-3. Update stale test imports and route assumptions.
-4. Add or repair tests for the migrated module boundaries.
-5. Update docs if the chosen alias strategy differs from the attached architecture document examples.
-
-### Verification
-
-1. Run lint for all touched files.
-2. Run targeted unit and e2e tests.
-3. Run architecture checks if used in the repo.
-
-## Recommended Execution Slices
-
-To keep each chat round small enough, execute the migration in these slices:
-
-1. Phase 0 decisions + Phase 1 for `auth` and `user`.
-2. Phase 2 for `auth` only.
-3. Phase 2 for `user` only.
-4. Phase 3 for `auth` only.
-5. Phase 3 for `user` only.
-6. Phase 4 for `auth` and shared transaction setup.
-7. Phase 4 for `user`.
-8. Phase 5 and Phase 6 cleanup.
-
-## Known Risks
-
-1. Alias inconsistency between docs and current repo can create unnecessary churn if not decided first.
-2. Folder moves will break imports, tests, and possibly editor assumptions if done too broadly in one round.
-3. Transaction migration should not start before the target module structure is stable enough to support it.
-4. Existing e2e tests appear out of sync with current file locations, so test failures may include pre-existing issues unrelated to a given phase.
-5. Route centralization is blocked until the project chooses whether URI versioning stays in `main.ts` or moves into the route constants.
-
-## Recommended First Implementation Round
-
-The safest first round is:
-
-1. Complete Phase 0 decisions.
-2. Implement Phase 1.
-3. If scope remains small enough, start Phase 2 only for DTO immutability and explicit DTO-to-input conversion in `auth`.
-
-This gives immediate alignment progress without mixing route changes, folder moves, and transaction rewrites in the same pass.
+## Locked Decisions
+
+1. Canonical alias is `@app/*`.
+2. Route versioning must live in `src/routes/app-routes.constant.ts`.
+3. Nest URI versioning in `main.ts` should be removed as route constants are adopted.
+4. Temporary compatibility for legacy `#...` imports is allowed only during migration phases.
+
+## Current Status
+
+### Completed in current round
+
+1. Added `@app/*` path mapping in project configuration.
+2. Migrated `src` and `test` imports from `#...` to `@app/*`.
+3. Removed legacy `#...` alias mappings from project configuration.
+4. Added `src/routes/app-routes.constant.ts` for current `auth` and `user` v1 endpoints.
+5. Removed Nest URI versioning from `src/main.ts`.
+6. Updated `auth` and `user` controllers to use centralized route constants.
+7. Updated affected tests to use current controller paths, centralized routes, and current service method names.
+8. Applied `readonly` to auth/user API DTO properties in the current scope.
+9. Moved `auth` API files under `src/modules/auth/api/...` and made `AuthModule` own its controller.
+10. Moved `user` API files under `src/modules/user/api/...` and made `UserModule` own its controller.
+11. Moved `auth` and `user` services into `application/` and moved their used models into `application/models/{inputs,outputs}`.
+12. Updated remaining `user` datasource imports to the new application-layer model paths.
+13. Removed one stale auth DTO unit test that referenced a nonexistent source file.
+14. Moved `auth` and `user` entities into `domain/entities`.
+15. Moved `auth` and `user` datasources into `infrastructure/datasources` and updated their imports.
+16. Made controller-to-application boundaries explicit by constructing input models in `auth` and `user` controllers.
+17. Added `nestjs-cls` transactional wiring and migrated `auth` and `user` datasources from `PrismaService` to `TransactionHost<TransactionalAdapterPrisma>`.
+18. Moved the remaining `UserModificationRule` out of `src/business` and into `src/modules/user/application/rules`, with a module-local user exception.
+19. Aligned `test/jest-e2e.json` to `@swc/jest` and `@app/*`.
+20. Added `test/jest-unit.json` and the `test:unit` npm script for unit specs under `test/unit`.
+21. Fixed strict-mode DTO test assertions and cleaned up `test/tsconfig.json` diagnostics.
+22. Enabled SWC decorator support across all Jest entrypoints used by the repo.
+23. Updated AI guidance docs to reflect `@app/*` as the canonical alias.
+24. Updated `.dependency-cruiser.js` to remove `src/business` assumptions and match the `application/domain/infrastructure` folder layout.
+25. Re-validated the migrated auth/user slice with build, e2e, and unit test runs.
+26. Re-ran dependency-cruiser and confirmed no architecture rule violations in the current `src` graph.
+27. Moved reusable Swagger response helpers from `src/api/common` into `src/shared/helpers` and updated module Swagger imports.
+28. Re-ran build and architecture validation after the Swagger helper relocation.
+29. Moved `JwtPayload` into `src/core/auth` so shared decorators and non-auth modules no longer depend on the auth feature module for a common auth contract.
+30. Re-ran build, architecture validation, and e2e coverage after relocating the shared JWT payload contract.
+31. Removed empty legacy directories under `src/api/v1/auth` and `src/api/v1/user` after the feature controller migration.
+32. Removed the remaining `ApiV1Module` wrapper and let `ApiModule` compose feature modules directly.
+33. Removed the now-empty `src/api/v1` directory and re-validated build plus dependency boundaries.
+34. Removed `src/api/api.module.ts` and imported `AuthModule` plus `UserModule` directly in `AppModule`.
+35. Moved Swagger bootstrap setup from `src/api/swagger.setup.ts` into `src/core/swagger/swagger.setup.ts`.
+36. Removed the obsolete dependency-cruiser rule that referenced the deleted top-level `src/api` layer.
+37. Removed the now-empty `src/api` directory and re-validated build, dependency rules, and e2e coverage.
+38. Moved `SwaggerHelpers` from `src/shared/helpers` into `src/core/swagger` so all Swagger-specific support now lives in one framework-facing location.
+39. Grouped `AppModule` imports into core modules, feature modules, and global providers for a clearer composition root.
+40. Re-ran build, dependency validation, and e2e coverage after moving Swagger helpers into `src/core/swagger` and cleaning up `AppModule` composition.
+41. Deleted `doc/ARCHITECTURE.md` to avoid duplicate architecture guidance while `ai/architecture-rules.md` remains the single source of truth during the migration.
+42. Tightened dependency-cruiser rules so API, application, domain, and infrastructure layers have more precise cross-module restrictions.
+43. Cleaned `main.ts` bootstrap wiring so CORS origin checks are deterministic and the startup flow is easier to read.
+44. Re-ran build, dependency validation, and e2e coverage after removing the duplicate architecture doc and tightening bootstrap plus dependency guardrails.
+45. Removed remaining default exports in config code, replaced seed `.then()` chaining with `async/await`, and aligned remaining output models with `readonly` requirements.
+46. Extracted application bootstrap wiring from `main.ts` into `src/core/config/utils/configure-app.util.ts` so startup concerns live in one reusable core utility.
+47. Added more specific architecture guardrails for API-to-domain/infrastructure imports, application-to-API imports, and domain purity.
+48. Re-ran build, dependency validation, and e2e coverage after extracting bootstrap setup and tightening the remaining architecture guardrails.
+
+### Remaining follow-up
+
+1. Tighten dependency rules further only if new feature modules are added or current core auth contracts are formalized differently.
+2. Continue the same migration checklist when new feature modules are introduced beyond `auth` and `user`.
+
+## Verified Current State
+
+1. Canonical alias is `@app/*` across source, tests, and repo guidance.
+2. Route versioning lives in `src/routes/app-routes.constant.ts` and `src/main.ts` no longer enables Nest URI versioning.
+3. `src/modules` currently contains only `auth` and `user`, and both use `api`, `application`, `domain`, and `infrastructure` folders.
+4. No standalone `src/business` layer remains in the runtime code.
+5. Auth and user datasources use `TransactionHost<TransactionalAdapterPrisma>` instead of direct `PrismaService` injection.
+6. Jest config for e2e and unit tests is aligned to `@swc/jest`, `@app/*`, and Nest decorator metadata.
+7. Reusable Swagger response helpers now live under `src/core/swagger`.
+8. Shared JWT payload typing now lives under `src/core/auth` instead of the `auth` feature module.
+9. `AppModule` imports feature modules directly, without any top-level `src/api` module layer remaining.
+10. Swagger bootstrap setup and response helpers now live under `src/core/swagger` as part of application wiring.
+11. No top-level `src/api` directory remains in the repository.
+12. `ai/architecture-rules.md` is the only maintained architecture source until post-migration docs are recreated.
+
+## Remaining Drift Found After Migration
+
+1. Dependency-cruiser rules now distinguish API, application, domain, and infrastructure cross-module limits, but should still be revisited when additional modules introduce real integration cases.
+
+## Validation Performed
+
+1. `npm run build`
+2. `npm run test:e2e -- --runInBand`
+3. `npm run test:unit -- --runInBand`
+4. `npm run test:arch`
+
+## Recommended Next Slice
+
+1. If new modules are introduced, apply the same `api/application/domain/infrastructure` structure immediately instead of relying on later migration.
+2. Revisit dependency boundaries only when there is concrete new cross-module behavior to enforce, so rules stay aligned with real module contracts.

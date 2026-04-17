@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import { CommonStatus } from '../shared/enums';
 import * as bcrypt from 'bcryptjs';
+
+import { CommonStatus } from '../shared/enums';
 
 const prisma = new PrismaClient();
 
@@ -38,10 +39,15 @@ async function main() {
   console.log(' Email:', email);
 }
 
-main()
-  .then(() => prisma.$disconnect())
-  .catch(async (e) => {
+async function bootstrapSeed() {
+  try {
+    await main();
+    await prisma.$disconnect();
+  } catch (e) {
     console.error(e);
     await prisma.$disconnect();
     process.exit(1);
-  });
+  }
+}
+
+void bootstrapSeed();

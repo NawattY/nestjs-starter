@@ -1,4 +1,4 @@
-import { AppException } from '#shared/exceptions/app.exception';
+import { AppException } from '@app/shared/exceptions/app.exception';
 import { HttpStatus } from '@nestjs/common';
 
 export function handleException(

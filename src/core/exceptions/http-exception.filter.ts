@@ -1,5 +1,5 @@
-import { ERROR_CODE } from '#constants/error-code.constant';
-import { ERROR_MESSAGE } from '#constants/error-message.constant';
+import { ERROR_CODE } from '@app/constants/error-code.constant';
+import { ERROR_MESSAGE } from '@app/constants/error-message.constant';
 import {
   ExceptionFilter,
   Catch,

@@ -1,4 +1,4 @@
-import { validateAndTransformConfig } from '#core/config/utils/validate-config.util';
+import { validateAndTransformConfig } from '@app/core/config/utils/validate-config.util';
 import { registerAs } from '@nestjs/config';
 import { IsNotEmpty, IsString } from 'class-validator';
 

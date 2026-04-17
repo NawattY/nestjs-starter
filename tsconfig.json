@@ -6,7 +6,9 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "baseUrl": "./",
-    "paths": { "#*": ["src/*"] },
+    "paths": {
+      "@app/*": ["src/*"]
+    },
 
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

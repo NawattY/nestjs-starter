@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CacheAdapter } from './interfaces/cache.interface';
-import { RedisService } from '#core/redis/redis.service';
+import { RedisService } from '@app/core/redis/redis.service';
 
 @Injectable()
 export class RedisCacheAdapter implements CacheAdapter {

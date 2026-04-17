@@ -1,4 +1,4 @@
-import { DEFAULT_PAGINATION } from '#constants/pagination.constant';
+import { DEFAULT_PAGINATION } from '@app/constants/pagination.constant';
 
 export class PaginateInput {
   page: number = DEFAULT_PAGINATION.PAGE;

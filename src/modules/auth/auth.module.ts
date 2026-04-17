@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './services/auth.service';
-import { AuthPrismaDataSource } from './datasources/auth.prisma.datasource';
-import { AUTH_DATASOURCE } from './datasources/auth.datasource.interface';
-import { CrossBusinessModule } from '#business/business.module';
+
+import { AuthController } from './api/controllers/auth.controller';
+import { AuthService } from './application/auth.service';
+import { AUTH_DATASOURCE } from './infrastructure/datasources/auth.datasource.interface';
+import { AuthPrismaDataSource } from './infrastructure/datasources/auth.prisma.datasource';
 
 @Module({
+  controllers: [AuthController],
   providers: [
     AuthService,
     {
@@ -12,7 +14,6 @@ import { CrossBusinessModule } from '#business/business.module';
       useClass: AuthPrismaDataSource,
     },
   ],
-  imports: [CrossBusinessModule],
   exports: [AuthService],
 })
 export class AuthModule {}

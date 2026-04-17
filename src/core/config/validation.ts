@@ -1,6 +1,6 @@
 import * as Joi from 'joi';
 
-export default Joi.object({
+export const coreValidationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid('local', 'develop', 'staging', 'uat', 'production', 'test')
     .default('local'),

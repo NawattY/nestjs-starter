@@ -75,7 +75,8 @@ src/
 │   ├── auth/
 │   ├── database/
 │   ├── config/
-│   └── interceptors/
+│   ├── interceptors/
+│   └── swagger/
 │
 ├── shared/                           # 🔧 Shared Utilities
 │   ├── decorators/
@@ -85,7 +86,6 @@ src/
 │   ├── exceptions/
 │   ├── filters/
 │   ├── pipes/
-│   ├── swagger/
 │   └── utils/
 │
 └── constants/
@@ -121,6 +121,7 @@ src/
 ### 4.1 API Layer (`modules/{module}/api/`)
 - **Responsibility:** Controllers, DTO Validation, Swagger.
 - **Forbidden:** Logic implementation, DB access.
+- **Forbidden Imports:** Domain layer, Infrastructure layer, and other feature modules.
 - **Route Rule:** MUST use constants from `src/routes/app-routes.constant.ts`.
 
 ### 4.2 Application Layer (`modules/{module}/application/`)
@@ -129,6 +130,7 @@ src/
 - **Circular Dependency:** Use `forwardRef()` if circular import occurs.
 - **Injection:** MUST use `@Inject(TOKEN)` with Interface for Datasources.
 - **Forbidden:**
+  - ❌ Importing API layer classes.
   - ❌ Importing `PrismaService` directly.
   - ❌ Using DTOs (use Input Models).
   - ❌ Returning Entities (use Output Models).
@@ -147,7 +149,7 @@ imports: [forwardRef(() => ProductModule)]
 
 ### 4.3 Domain Layer (`modules/{module}/domain/`)
 - **Responsibility:** Pure Business Logic (Entities, Value Objects).
-- **Forbidden:** External dependencies, database access, framework code.
+- **Forbidden:** External dependencies, database access, framework code, and `src/core` / `src/config` / `src/database` imports.
 
 ### 4.4 Infrastructure Layer (`modules/{module}/infrastructure/`)
 - **Responsibility:** Database operations.
@@ -560,7 +562,7 @@ return prismaPaginate(this.txHost.tx.collection, {
 
 ### Base Payload
 ```typescript
-// core/auth/interfaces/jwt-base-payload.interface.ts
+// core/auth/jwt-base-payload.interface.ts
 export interface JwtBasePayload {
   uid: string;  // User ID (mandatory)
   sid: string;  // Session ID (mandatory)
@@ -569,7 +571,7 @@ export interface JwtBasePayload {
 
 ### Extended Payload
 ```typescript
-// core/auth/interfaces/jwt-payload.interface.ts
+// core/auth/jwt-payload.interface.ts
 export interface JwtPayload extends JwtBasePayload {
   role?: string;
   permissions?: string[];
@@ -624,12 +626,12 @@ export function ApiResponses(
 
 ### SwaggerHelpers Class
 ```typescript
-// shared/swagger/swagger.helpers.ts
+// core/swagger/swagger-helpers.ts
 import { ERROR_CODE } from '@app/constants/error-code.constant';
 import { ERROR_MESSAGE } from '@app/constants/error-message.constant';
 
 export class SwaggerHelpers {
-  static success(status: number, example: any, description = 'Success') {
+  static success(status: number, example: unknown, description = 'Success') {
     return { status, description, examples: { Success: { value: example } } };
   }
 
@@ -662,7 +664,7 @@ export class SwaggerHelpers {
 ### Response Files (Array Format)
 ```typescript
 // modules/{module}/api/swagger/create-collection.response.ts
-import { SwaggerHelpers } from '@app/shared/swagger/swagger.helpers';
+import { SwaggerHelpers } from '@app/core/swagger/swagger-helpers';
 import { ERROR_CODE } from '@app/constants/error-code.constant';
 
 const collectionExample = {
@@ -787,7 +789,7 @@ Before generating code:
 - [ ] **Types:** Passing DTOs to Service? → Use Input Model
 - [ ] **Return:** Returning Prisma object? → Map to Output Model
 - [ ] **Swagger:** Created swagger response files?
-- [ ] **Path Alias:** Using `#modules`, `#shared`, etc.?
+- [ ] **Path Alias:** Using `@app/*` consistently?
 
 ---
 

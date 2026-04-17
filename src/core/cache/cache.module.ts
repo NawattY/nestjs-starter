@@ -2,9 +2,9 @@ import { Global, Module } from '@nestjs/common';
 import { CacheService } from './cache.service';
 import { RedisCacheAdapter } from './redis-cache.adapter';
 import { MemoryCacheAdapter } from './memory-cache.adapter';
-import { CoreConfigService } from '#core/config/config.service';
-import { RedisService } from '#core/redis/redis.service';
-import { RedisModule } from '#core/redis/redis.module';
+import { CoreConfigService } from '@app/core/config/config.service';
+import { RedisService } from '@app/core/redis/redis.service';
+import { RedisModule } from '@app/core/redis/redis.module';
 
 @Global()
 @Module({
