@@ -69,6 +69,9 @@ This plan is intentionally split into phases so the migration can be executed ac
 47. Added more specific architecture guardrails for API-to-domain/infrastructure imports, application-to-API imports, and domain purity.
 48. Re-ran build, dependency validation, and e2e coverage after extracting bootstrap setup and tightening the remaining architecture guardrails.
 49. Eliminated the remaining ESLint warnings, tightened several auth/core typing gaps, and re-ran lint, build, architecture validation, e2e, and unit tests successfully.
+50. Migrated env/config validation from Joi and class-based config validators to Zod while keeping request DTO validation on class-validator, then re-ran lint, build, architecture validation, e2e, and unit tests successfully.
+51. Consolidated reusable Zod env helpers for string, optional string, integer, boolean, and ms-duration parsing so config schemas stay consistent and easier to extend.
+52. Added unit coverage for Zod config helpers and core env validation so coercion, defaults, empty-string handling, and validation error formatting are now regression-tested.
 
 ### Remaining follow-up
 
@@ -90,6 +93,9 @@ This plan is intentionally split into phases so the migration can be executed ac
 11. No top-level `src/api` directory remains in the repository.
 12. `ai/architecture-rules.md` is the only maintained architecture source until post-migration docs are recreated.
 13. `npm run lint` now completes with zero errors and zero warnings.
+14. Env/config validation now uses Zod across core bootstrap and per-config factories, while request DTO validation remains on class-validator.
+15. Shared env parsing helpers now centralize common Zod config patterns, including empty-string handling for optional values such as Redis passwords.
+16. Core config validation and shared Zod env helpers now have dedicated unit tests under `test/unit/core/config`.
 
 ## Remaining Drift Found After Migration
 

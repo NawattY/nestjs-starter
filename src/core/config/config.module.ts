@@ -3,7 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
 
 import { CoreConfigService } from './config.service';
-import { coreValidationSchema } from './validation';
+import { validateCoreConfig } from './validation';
 
 @Global()
 @Module({
@@ -17,7 +17,7 @@ import { coreValidationSchema } from './validation';
         `.env.${process.env.NODE_ENV}`, // e.g., .env.development
         '.env', // ไฟล์ .env หลัก
       ],
-      validationSchema: coreValidationSchema,
+      validate: validateCoreConfig,
       load: appConfigurations,
       cache: true, // (Optional) เปิดใช้งาน caching สำหรับ config ที่โหลดแล้ว
     }),
