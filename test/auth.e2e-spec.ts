@@ -1,12 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { JwtAuthGuard } from '@app/core/auth/jwt-auth.guard';
+import type { JwtPayload } from '@app/core/auth/jwt-payload.interface';
+import { AuthController } from '@app/modules/auth/api/controllers/auth.controller';
+import { AuthService } from '@app/modules/auth/application/auth.service';
+import { ROUTES } from '@app/routes/app-routes.constant';
+import type { ExecutionContext, INestApplication } from '@nestjs/common';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import request from 'supertest';
 
-import { JwtPayload } from '@app/core/auth/jwt-payload.interface';
-import { AuthService } from '@app/modules/auth/application/auth.service';
-import { AuthController } from '@app/modules/auth/api/controllers/auth.controller';
-import { JwtAuthGuard } from '@app/core/auth/jwt-auth.guard';
-import { ROUTES } from '@app/routes/app-routes.constant';
+function getHttpServer(app: INestApplication): Parameters<typeof request>[0] {
+  return app.getHttpServer() as unknown as Parameters<typeof request>[0];
+}
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -35,7 +39,7 @@ describe('AuthController (e2e)', () => {
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({
-        canActivate: (context: import('@nestjs/common').ExecutionContext) => {
+        canActivate: (context: ExecutionContext) => {
           const req = context.switchToHttp().getRequest<{ user?: JwtPayload }>();
           req.user = {
             uid: '1',
@@ -55,7 +59,7 @@ describe('AuthController (e2e)', () => {
   });
 
   it('/v1/auth/login (POST)', () => {
-    return request(app.getHttpServer())
+    return request(getHttpServer(app))
       .post(`/${ROUTES.V1.AUTH.ROOT}/${ROUTES.V1.AUTH.LOGIN}`)
       .send({ username: 'a', password: 'b' })
       .expect(201)
@@ -63,7 +67,7 @@ describe('AuthController (e2e)', () => {
   });
 
   it('/v1/auth/me (GET)', () => {
-    return request(app.getHttpServer())
+    return request(getHttpServer(app))
       .get(`/${ROUTES.V1.AUTH.ROOT}/${ROUTES.V1.AUTH.ME}`)
       .set('Authorization', 'Bearer token')
       .expect(200)
@@ -76,7 +80,7 @@ describe('AuthController (e2e)', () => {
   });
 
   it('/v1/auth/refresh (POST)', () => {
-    return request(app.getHttpServer())
+    return request(getHttpServer(app))
       .post(`/${ROUTES.V1.AUTH.ROOT}/${ROUTES.V1.AUTH.REFRESH}`)
       .send({ refreshToken: 'refresh' })
       .expect(201)
@@ -84,7 +88,7 @@ describe('AuthController (e2e)', () => {
   });
 
   it('/v1/auth/logout (POST)', () => {
-    return request(app.getHttpServer())
+    return request(getHttpServer(app))
       .post(`/${ROUTES.V1.AUTH.ROOT}/${ROUTES.V1.AUTH.LOGOUT}`)
       .set('Authorization', 'Bearer token')
       .expect(204)

@@ -1,15 +1,18 @@
+import { JwtService } from '@app/core/auth/jwt.service';
+import type { BaseJwtPayload } from '@app/core/auth/jwt-base-payload.interface';
+import { JwtPayload } from '@app/core/auth/jwt-payload.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 
-import { JwtPayload } from '@app/core/auth/jwt-payload.interface';
-import { JwtService } from '@app/core/auth/jwt.service';
-
-import { AuthException } from '../exceptions/auth.exception';
 import { UserAuthEntity } from '../domain/entities/user-auth.entity';
-import { AUTH_DATASOURCE, AuthDataSource } from '../infrastructure/datasources/auth.datasource.interface';
-import { AuthOutput } from './models/outputs/auth.output';
+import { AuthException } from '../exceptions/auth.exception';
+import {
+  AUTH_DATASOURCE,
+  AuthDataSource,
+} from '../infrastructure/datasources/auth.datasource.interface';
 import { LoginInput } from './models/inputs/login.input';
 import { RefreshTokenInput } from './models/inputs/refresh-token.input';
+import { AuthOutput } from './models/outputs/auth.output';
 
 @Injectable()
 export class AuthService {
@@ -28,12 +31,15 @@ export class AuthService {
   }
 
   private async validatePassword(user: UserAuthEntity, password: string): Promise<void> {
-    if (!user.password || !await bcrypt.compare(password, user.password)) {
+    if (!user.password || !(await bcrypt.compare(password, user.password))) {
       AuthException.credentialMismatch();
     }
   }
 
-  private async issueSession(userId: string, agent: { ip: string; userAgent: string }): Promise<AuthOutput> {
+  private async issueSession(
+    userId: string,
+    agent: { ip: string; userAgent: string },
+  ): Promise<AuthOutput> {
     const sessionId = crypto.randomUUID();
 
     const refreshToken = this.jwt.signRefresh({ sid: sessionId, uid: userId });
@@ -60,7 +66,7 @@ export class AuthService {
   }
 
   async refresh(input: RefreshTokenInput): Promise<AuthOutput> {
-    let payload: any;
+    let payload: BaseJwtPayload;
 
     try {
       payload = this.jwt.verifyRefresh(input.refreshToken);
@@ -83,7 +89,9 @@ export class AuthService {
   async logout(sid: string): Promise<void> {
     try {
       await this.ds.revokeSession(sid);
-    } catch {}
+    } catch {
+      return;
+    }
   }
 
   async getUserById(id: string): Promise<UserAuthEntity> {

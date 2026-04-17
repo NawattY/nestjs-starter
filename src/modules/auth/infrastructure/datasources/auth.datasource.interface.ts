@@ -1,5 +1,5 @@
-import { SessionEntity } from '../../domain/entities/session.entity';
-import { UserAuthEntity } from '../../domain/entities/user-auth.entity';
+import type { SessionEntity } from '../../domain/entities/session.entity';
+import type { UserAuthEntity } from '../../domain/entities/user-auth.entity';
 
 export const AUTH_DATASOURCE = 'AuthDataSource';
 

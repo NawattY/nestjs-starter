@@ -1,12 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import * as bcrypt from 'bcryptjs';
 
-import { AuthService } from '../../../../../src/modules/auth/application/auth.service';
 import { JwtService } from '../../../../../src/core/auth/jwt.service';
-import { AppException } from '../../../../../src/shared/exceptions/app.exception';
+import { AuthService } from '../../../../../src/modules/auth/application/auth.service';
 import { LoginInput } from '../../../../../src/modules/auth/application/models/inputs/login.input';
 import { RefreshTokenInput } from '../../../../../src/modules/auth/application/models/inputs/refresh-token.input';
 import { AUTH_DATASOURCE } from '../../../../../src/modules/auth/infrastructure/datasources/auth.datasource.interface';
-import * as bcrypt from 'bcryptjs';
+import { AppException } from '../../../../../src/shared/exceptions/app.exception';
 
 jest.mock('bcryptjs');
 
@@ -101,9 +102,9 @@ describe('AuthService', () => {
     it('should return new tokens on success', async () => {
       const payload = { sid: 'session_id', uid: '1' };
       mockJwtService.verifyRefresh.mockReturnValue(payload);
-      const session = { 
-        refreshTokenHash: 'hash', 
-        isActive: () => true 
+      const session = {
+        refreshTokenHash: 'hash',
+        isActive: () => true,
       };
       mockAuthDataSource.findSession.mockResolvedValue(session);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -119,11 +120,16 @@ describe('AuthService', () => {
         }),
       );
 
-      expect(result).toEqual({ accessToken: 'new_access_token', refreshToken: 'new_refresh_token' });
+      expect(result).toEqual({
+        accessToken: 'new_access_token',
+        refreshToken: 'new_refresh_token',
+      });
     });
 
     it('should throw if refresh token invalid', async () => {
-      mockJwtService.verifyRefresh.mockImplementation(() => { throw new Error('Invalid refresh token'); });
+      mockJwtService.verifyRefresh.mockImplementation(() => {
+        throw new Error('Invalid refresh token');
+      });
       await expect(
         service.refresh(
           new RefreshTokenInput({
@@ -151,9 +157,9 @@ describe('AuthService', () => {
 
     it('should revoke session if token mismatch (reuse detection)', async () => {
       mockJwtService.verifyRefresh.mockReturnValue({ sid: 'session_id', uid: '1' });
-      const session = { 
-        refreshTokenHash: 'hash', 
-        isActive: () => true 
+      const session = {
+        refreshTokenHash: 'hash',
+        isActive: () => true,
       };
       mockAuthDataSource.findSession.mockResolvedValue(session);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);

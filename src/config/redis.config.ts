@@ -41,11 +41,7 @@ export const redisConfiguration = registerAs('redis', (): RedisConfig => {
     REDIS_ENABLED: process.env.REDIS_ENABLED ?? true,
   };
 
-  const validated = validateAndTransformConfig(
-    EnvironmentVariables,
-    rawConfig,
-    'Redis Config',
-  );
+  const validated = validateAndTransformConfig(EnvironmentVariables, rawConfig, 'Redis Config');
 
   return {
     host: validated.REDIS_HOST,

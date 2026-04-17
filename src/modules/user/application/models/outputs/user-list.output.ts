@@ -1,6 +1,5 @@
-import { Expose, Type } from 'class-transformer';
-
 import { PaginatedOutput } from '@app/shared/models/paginate.output';
+import { Expose, Type } from 'class-transformer';
 
 import { UserOutput } from './user.output';
 

@@ -1,4 +1,5 @@
 import { validate } from 'class-validator';
+
 import { LoginRequestDto } from '../../../../../../../src/modules/auth/api/dtos/requests/login-request.dto';
 
 describe('LoginRequestDto', () => {

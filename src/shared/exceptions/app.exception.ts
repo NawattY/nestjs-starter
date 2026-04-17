@@ -13,11 +13,7 @@ export class AppException extends HttpException {
   public readonly errors?: Record<string, string[]> | string[];
 
   constructor(options: AppExceptionOptions) {
-    const {
-      errorCode,
-      statusCode = HttpStatus.INTERNAL_SERVER_ERROR,
-      errors,
-    } = options;
+    const { errorCode, statusCode = HttpStatus.INTERNAL_SERVER_ERROR, errors } = options;
 
     super(
       {

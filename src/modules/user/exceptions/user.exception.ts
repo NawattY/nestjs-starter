@@ -1,7 +1,6 @@
-import { HttpStatus } from '@nestjs/common';
-
 import { ERROR_CODE } from '@app/constants/error-code.constant';
 import { AppException } from '@app/shared/exceptions/app.exception';
+import { HttpStatus } from '@nestjs/common';
 
 export class UserException {
   static userSuspended(): never {

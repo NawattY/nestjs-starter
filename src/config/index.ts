@@ -4,8 +4,8 @@ import { loggerConfiguration } from './logger.config';
 import { redisConfiguration } from './redis.config';
 
 export const appConfigurations = [
-	authConfiguration,
-	databaseConfiguration,
-	loggerConfiguration,
-	redisConfiguration,
+  authConfiguration,
+  databaseConfiguration,
+  loggerConfiguration,
+  redisConfiguration,
 ];

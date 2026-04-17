@@ -1,10 +1,5 @@
 export class UpdateUserInput {
-  constructor(input: {
-    userId: string;
-    email?: string;
-    firstName?: string;
-    lastName?: string;
-  }) {
+  constructor(input: { userId: string; email?: string; firstName?: string; lastName?: string }) {
     this.userId = input.userId;
     this.email = input.email;
     this.firstName = input.firstName;

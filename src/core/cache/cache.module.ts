@@ -1,10 +1,11 @@
-import { Global, Module } from '@nestjs/common';
-import { CacheService } from './cache.service';
-import { RedisCacheAdapter } from './redis-cache.adapter';
-import { MemoryCacheAdapter } from './memory-cache.adapter';
 import { CoreConfigService } from '@app/core/config/config.service';
-import { RedisService } from '@app/core/redis/redis.service';
 import { RedisModule } from '@app/core/redis/redis.module';
+import { RedisService } from '@app/core/redis/redis.service';
+import { Global, Module } from '@nestjs/common';
+
+import { CacheService } from './cache.service';
+import { MemoryCacheAdapter } from './memory-cache.adapter';
+import { RedisCacheAdapter } from './redis-cache.adapter';
 
 @Global()
 @Module({
@@ -18,8 +19,8 @@ import { RedisModule } from '@app/core/redis/redis.module';
 
         // ✔ เลือก adapter ให้ถูกต้อง
         return redisEnabled
-          ? new RedisCacheAdapter(redis)   // pass RedisService
-          : new MemoryCacheAdapter();      // fallback
+          ? new RedisCacheAdapter(redis) // pass RedisService
+          : new MemoryCacheAdapter(); // fallback
       },
     },
     CacheService,

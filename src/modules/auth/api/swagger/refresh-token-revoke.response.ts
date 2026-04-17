@@ -1,5 +1,5 @@
-import { SwaggerHelpers } from '@app/core/swagger/swagger-helpers';
 import { ERROR_CODE } from '@app/constants/error-code.constant';
+import { SwaggerHelpers } from '@app/core/swagger/swagger-helpers';
 
 export const revokeRefreshResponse = [
   {

@@ -14,9 +14,7 @@ export class PaginateQueryDto implements PaginatedRequestInterface {
   })
   @IsOptional()
   @Transform(({ value }) =>
-    toInteger(toInteger(value)) < 1
-      ? DEFAULT_PAGINATION.PAGE
-      : toInteger(value),
+    toInteger(toInteger(value)) < 1 ? DEFAULT_PAGINATION.PAGE : toInteger(value),
   )
   @IsNumber()
   page: number = DEFAULT_PAGINATION.PAGE;

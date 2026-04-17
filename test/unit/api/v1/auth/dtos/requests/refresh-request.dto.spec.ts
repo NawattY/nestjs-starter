@@ -1,4 +1,5 @@
 import { validate } from 'class-validator';
+
 import { RefreshRequestDto } from '../../../../../../../src/modules/auth/api/dtos/requests/refresh-request.dto';
 
 describe('RefreshRequestDto', () => {

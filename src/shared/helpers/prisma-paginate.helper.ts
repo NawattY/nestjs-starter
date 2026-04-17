@@ -1,23 +1,44 @@
-import { PaginatedResultInterface } from '@app/shared/interfaces/paginated-result.interface';
+import type { PaginatedResultInterface } from '@app/shared/interfaces/paginated-result.interface';
 
-interface PrismaPaginateOptions<Domain, Where = any, Order = any> {
+interface PrismaPaginateOptions<
+  Item,
+  Domain,
+  Where = unknown,
+  Order = unknown,
+  Include = unknown,
+  Select = unknown,
+> {
   page: number;
   perPage: number;
   where?: Where;
   orderBy?: Order;
-  include?: any; // Prisma.XInclude
-  select?: any;  // Prisma.XSelect
-  entity?: new (domain: Domain) => any;
+  include?: Include;
+  select?: Select;
+  mapItem?: (item: Item) => Domain;
 }
 
-export async function prismaPaginate<Domain>(
+export async function prismaPaginate<
+  Item,
+  Domain = Item,
+  Where = unknown,
+  Order = unknown,
+  Include = unknown,
+  Select = unknown,
+>(
   modelDelegate: {
-    findMany: Function;
-    count: Function;
+    findMany(args: {
+      where?: Where;
+      skip: number;
+      take: number;
+      orderBy?: Order;
+      include?: Include;
+      select?: Select;
+    }): Promise<Item[]>;
+    count(args: { where?: Where }): Promise<number>;
   },
-  options: PrismaPaginateOptions<Domain>,
-): Promise<PaginatedResultInterface<any>> {
-  const { page = 1, perPage = 10, where, orderBy, include, select, entity } = options;
+  options: PrismaPaginateOptions<Item, Domain, Where, Order, Include, Select>,
+): Promise<PaginatedResultInterface<Domain>> {
+  const { page = 1, perPage = 10, where, orderBy, include, select, mapItem } = options;
 
   const skip = (page - 1) * perPage;
   const take = perPage;
@@ -36,9 +57,7 @@ export async function prismaPaginate<Domain>(
 
   const totalPages = Math.ceil(totalItems / perPage);
 
-  const mappedItems = entity
-    ? items.map((item: any) => new entity(item))
-    : items;
+  const mappedItems = mapItem ? items.map((item) => mapItem(item)) : (items as unknown as Domain[]);
 
   return {
     items: mappedItems,

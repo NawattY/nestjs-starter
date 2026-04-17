@@ -1,4 +1,3 @@
-
 import { validateAndTransformConfig } from '@app/core/config/utils/validate-config.util';
 import { registerAs } from '@nestjs/config';
 import { IsOptional, IsString } from 'class-validator';
@@ -24,11 +23,7 @@ export const loggerConfiguration = registerAs('logger', (): LoggerConfig => {
     LOG_PRETTY: process.env.LOG_PRETTY ?? 'true',
   };
 
-  const validated = validateAndTransformConfig(
-    EnvironmentVariables,
-    rawConfig,
-    'Logger Config',
-  );
+  const validated = validateAndTransformConfig(EnvironmentVariables, rawConfig, 'Logger Config');
 
   return {
     level: validated.LOG_LEVEL,

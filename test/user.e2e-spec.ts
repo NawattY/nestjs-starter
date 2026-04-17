@@ -1,11 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-
-import { UserService } from '@app/modules/user/application/user.service';
 import { JwtAuthGuard } from '@app/core/auth/jwt-auth.guard';
 import { UserController } from '@app/modules/user/api/controllers/user.controller';
+import { UserService } from '@app/modules/user/application/user.service';
 import { ROUTES } from '@app/routes/app-routes.constant';
+import type { INestApplication } from '@nestjs/common';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import request from 'supertest';
+
+function getHttpServer(app: INestApplication): Parameters<typeof request>[0] {
+  return app.getHttpServer() as unknown as Parameters<typeof request>[0];
+}
 
 describe('UserController (e2e)', () => {
   let app: INestApplication;
@@ -52,7 +56,7 @@ describe('UserController (e2e)', () => {
   });
 
   it('/v1/users (GET)', () => {
-    return request(app.getHttpServer())
+    return request(getHttpServer(app))
       .get(`/${ROUTES.V1.USER.ROOT}`)
       .set('Authorization', 'Bearer token')
       .expect(200)

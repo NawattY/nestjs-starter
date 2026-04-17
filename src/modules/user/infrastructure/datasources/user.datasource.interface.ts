@@ -1,7 +1,7 @@
-import { PaginatedResultInterface } from '@app/shared/interfaces/paginated-result.interface';
+import type { PaginatedResultInterface } from '@app/shared/interfaces/paginated-result.interface';
 
-import { FindUsersInput } from '../../application/models/inputs/find-users.input';
-import { UserEntity } from '../../domain/entities/user.entity';
+import type { FindUsersInput } from '../../application/models/inputs/find-users.input';
+import type { UserEntity } from '../../domain/entities/user.entity';
 
 export const USER_DATASOURCE = 'UserDataSource';
 

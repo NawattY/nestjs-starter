@@ -17,11 +17,7 @@ export const databaseConfiguration = registerAs('database', (): PrismaDatabaseCo
     DATABASE_URL: process.env.DATABASE_URL,
   };
 
-  const validated = validateAndTransformConfig(
-    EnvironmentVariables,
-    rawConfig,
-    'Database Config',
-  );
+  const validated = validateAndTransformConfig(EnvironmentVariables, rawConfig, 'Database Config');
 
   return {
     url: validated.DATABASE_URL,

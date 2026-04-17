@@ -1,6 +1,7 @@
+import { Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
-import { Injectable } from '@nestjs/common';
+import type { User, UserSession } from '@prisma/client';
 
 import { SessionEntity } from '../../domain/entities/session.entity';
 import { UserAuthEntity } from '../../domain/entities/user-auth.entity';
@@ -8,23 +9,21 @@ import { AuthDataSource } from './auth.datasource.interface';
 
 @Injectable()
 export class AuthPrismaDataSource implements AuthDataSource {
-  constructor(
-    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
-  ) {}
+  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {}
 
-  private toUserEntity(user: any, provider?: any): UserAuthEntity {
+  private toUserEntity(user: User): UserAuthEntity {
     return new UserAuthEntity(
       user.id,
       user.mobile,
       user.email,
       user.password,
-      provider?.displayName ?? null,
-      provider?.providerUserId ?? null,
+      null,
+      null,
       !!user.password,
     );
   }
 
-  private toSessionEntity(session: any) {
+  private toSessionEntity(session: UserSession): SessionEntity {
     return new SessionEntity(
       session.id,
       session.userId,

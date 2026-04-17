@@ -1,10 +1,9 @@
-import { TransactionHost } from '@nestjs-cls/transactional';
-import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
-import { Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
-
 import { prismaPaginate } from '@app/shared/helpers/prisma-paginate.helper';
 import { PaginatedResultInterface } from '@app/shared/interfaces/paginated-result.interface';
+import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { Prisma, User } from '@prisma/client';
 
 import { FindUsersInput } from '../../application/models/inputs/find-users.input';
 import { UserEntity } from '../../domain/entities/user.entity';
@@ -12,21 +11,28 @@ import { UserDatasourceInterface } from './user.datasource.interface';
 
 @Injectable()
 export class UserPrismaDataSource implements UserDatasourceInterface {
-  constructor(
-    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
-  ) {}
+  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {}
 
   async findAll(input: FindUsersInput): Promise<PaginatedResultInterface<UserEntity>> {
-    const result = await prismaPaginate(this.txHost.tx.user, {
-      page: input.page,
-      perPage: input.perPage,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return {
-      items: result.items.map((user) => this.transformUserEntity(user)),
-      meta: result.meta,
-    };
+    return prismaPaginate<
+      User,
+      UserEntity,
+      Prisma.UserWhereInput,
+      Prisma.UserOrderByWithRelationInput,
+      Prisma.UserInclude,
+      Prisma.UserSelect
+    >(
+      {
+        findMany: (args) => this.txHost.tx.user.findMany(args),
+        count: ({ where }) => this.txHost.tx.user.count({ where }),
+      },
+      {
+        page: input.page,
+        perPage: input.perPage,
+        orderBy: { createdAt: 'desc' },
+        mapItem: (user) => this.transformUserEntity(user),
+      },
+    );
   }
 
   async findById(id: string): Promise<UserEntity | null> {
@@ -52,7 +58,7 @@ export class UserPrismaDataSource implements UserDatasourceInterface {
     return this.transformUserEntity(user);
   }
 
-  private transformUserEntity(user: User) {
+  private transformUserEntity(user: User): UserEntity {
     return new UserEntity(
       user.id,
       user.mobile,

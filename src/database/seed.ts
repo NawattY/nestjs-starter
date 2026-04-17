@@ -15,7 +15,7 @@ async function main() {
 
   // Check existing super admin
   const existing = await prisma.user.findFirst({
-    where: { mobile }
+    where: { mobile },
   });
 
   if (existing) {

@@ -1,9 +1,5 @@
 export class RefreshTokenInput {
-  constructor(input: {
-    refreshToken: string;
-    ip: string;
-    userAgent: string;
-  }) {
+  constructor(input: { refreshToken: string; ip: string; userAgent: string }) {
     this.refreshToken = input.refreshToken;
     this.ip = input.ip;
     this.userAgent = input.userAgent;

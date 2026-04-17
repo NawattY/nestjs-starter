@@ -1,15 +1,10 @@
-import { INestApplication } from '@nestjs/common';
-
+import { createValidationPipe } from '@app/core/pipes';
+import { setupSwagger } from '@app/core/swagger/swagger.setup';
+import type { INestApplication } from '@nestjs/common';
 import compression from 'compression';
 import helmet from 'helmet';
 
-import { createValidationPipe } from '@app/core/pipes';
-import { setupSwagger } from '@app/core/swagger/swagger.setup';
-
-const ALLOWED_CORS_ORIGINS = new Set([
-  'http://localhost:3000',
-  'https://api.yourdomain.com',
-]);
+const ALLOWED_CORS_ORIGINS = new Set(['http://localhost:3000', 'https://api.yourdomain.com']);
 
 const CORS_METHODS = 'GET,HEAD,PUT,PATCH,POST,DELETE';
 
@@ -24,7 +19,10 @@ export function configureApp(app: INestApplication): void {
   app.enableShutdownHooks();
 
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
       callback(null, isAllowedCorsOrigin(origin));
     },
     methods: CORS_METHODS,

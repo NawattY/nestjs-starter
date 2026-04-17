@@ -1,7 +1,6 @@
+import { appConfigurations } from '@app/config';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
-
-import { appConfigurations } from '@app/config';
 
 import { CoreConfigService } from './config.service';
 import { coreValidationSchema } from './validation';

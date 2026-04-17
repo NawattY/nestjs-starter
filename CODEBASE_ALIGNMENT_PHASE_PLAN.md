@@ -68,6 +68,7 @@ This plan is intentionally split into phases so the migration can be executed ac
 46. Extracted application bootstrap wiring from `main.ts` into `src/core/config/utils/configure-app.util.ts` so startup concerns live in one reusable core utility.
 47. Added more specific architecture guardrails for API-to-domain/infrastructure imports, application-to-API imports, and domain purity.
 48. Re-ran build, dependency validation, and e2e coverage after extracting bootstrap setup and tightening the remaining architecture guardrails.
+49. Eliminated the remaining ESLint warnings, tightened several auth/core typing gaps, and re-ran lint, build, architecture validation, e2e, and unit tests successfully.
 
 ### Remaining follow-up
 
@@ -88,6 +89,7 @@ This plan is intentionally split into phases so the migration can be executed ac
 10. Swagger bootstrap setup and response helpers now live under `src/core/swagger` as part of application wiring.
 11. No top-level `src/api` directory remains in the repository.
 12. `ai/architecture-rules.md` is the only maintained architecture source until post-migration docs are recreated.
+13. `npm run lint` now completes with zero errors and zero warnings.
 
 ## Remaining Drift Found After Migration
 
@@ -95,6 +97,7 @@ This plan is intentionally split into phases so the migration can be executed ac
 
 ## Validation Performed
 
+1. `npm run lint`
 1. `npm run build`
 2. `npm run test:e2e -- --runInBand`
 3. `npm run test:unit -- --runInBand`

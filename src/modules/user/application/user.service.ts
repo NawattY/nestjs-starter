@@ -3,11 +3,14 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { plainToInstance } from 'class-transformer';
 
 import { UserUpdatedEvent } from '../events/user-updated.event';
-import { USER_DATASOURCE, UserDatasourceInterface } from '../infrastructure/datasources/user.datasource.interface';
+import {
+  USER_DATASOURCE,
+  UserDatasourceInterface,
+} from '../infrastructure/datasources/user.datasource.interface';
 import { FindUsersInput } from './models/inputs/find-users.input';
 import { UpdateUserInput } from './models/inputs/update-user.input';
-import { UserListOutput } from './models/outputs/user-list.output';
 import { UserOutput } from './models/outputs/user.output';
+import { UserListOutput } from './models/outputs/user-list.output';
 import { UserModificationRule } from './rules/user-modification.rule';
 
 @Injectable()
@@ -46,10 +49,7 @@ export class UserService {
     const { userId, ...data } = input;
     const user = await this.userDatasource.update(userId, data);
 
-    this.eventEmitter.emit(
-      'user.updated',
-      new UserUpdatedEvent(userId, data),
-    );
+    this.eventEmitter.emit('user.updated', new UserUpdatedEvent(userId, data));
 
     return plainToInstance(UserOutput, user, {
       excludeExtraneousValues: true,

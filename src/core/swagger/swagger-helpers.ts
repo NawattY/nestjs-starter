@@ -215,8 +215,14 @@ export class SwaggerHelpers {
       },
       links: {
         first: `http://localhost:3000/api/v1/resource?page=1&perPage=${perPage}`,
-        previous: page > 1 ? `http://localhost:3000/api/v1/resource?page=${page - 1}&perPage=${perPage}` : '',
-        next: page < totalPages ? `http://localhost:3000/api/v1/resource?page=${page + 1}&perPage=${perPage}` : '',
+        previous:
+          page > 1
+            ? `http://localhost:3000/api/v1/resource?page=${page - 1}&perPage=${perPage}`
+            : '',
+        next:
+          page < totalPages
+            ? `http://localhost:3000/api/v1/resource?page=${page + 1}&perPage=${perPage}`
+            : '',
         last: `http://localhost:3000/api/v1/resource?page=${totalPages}&perPage=${perPage}`,
       },
     };

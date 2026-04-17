@@ -1,10 +1,9 @@
-import { NestFactory } from '@nestjs/core';
-import { Logger } from '@nestjs/common';
-
 import { AppModule } from '@app/app.module';
 import { CoreConfigService } from '@app/core/config/config.service';
 import { API_GLOBAL_PREFIX, configureApp } from '@app/core/config/utils/configure-app.util';
 import { LoggerService } from '@app/core/logger/services/logger.service';
+import { Logger } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {

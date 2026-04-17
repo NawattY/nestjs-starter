@@ -1,16 +1,3 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer';
-import { Request } from 'express';
-
 import { AuthUser } from '@app/core/auth/auth-user.decorator';
 import { JwtAuthGuard } from '@app/core/auth/jwt-auth.guard';
 import { JwtPayload } from '@app/core/auth/jwt-payload.interface';
@@ -19,6 +6,10 @@ import { LoginInput } from '@app/modules/auth/application/models/inputs/login.in
 import { RefreshTokenInput } from '@app/modules/auth/application/models/inputs/refresh-token.input';
 import { ROUTES } from '@app/routes/app-routes.constant';
 import { ApiResponses } from '@app/shared/decorators/api-response.decorator';
+import { Body, Controller, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
+import { Request } from 'express';
 
 import { LoginRequestDto } from '../dtos/requests/login-request.dto';
 import { RefreshRequestDto } from '../dtos/requests/refresh-request.dto';

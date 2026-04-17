@@ -2,23 +2,23 @@ import { Injectable, LoggerService as NestLoggerService } from '@nestjs/common';
 
 @Injectable()
 export class MailerService implements NestLoggerService {
-  log(message: any, context?: string): any {
+  log(message: unknown, context?: string): void {
     console.log(`[LOG] ${context ?? ''}`, message);
   }
 
-  error(message: any, trace?: string, context?: string): any {
+  error(message: unknown, trace?: string, context?: string): void {
     console.error(`[ERROR] ${context ?? ''}`, message, trace);
   }
 
-  warn(message: any, context?: string): any {
+  warn(message: unknown, context?: string): void {
     console.warn(`[WARN] ${context ?? ''}`, message);
   }
 
-  debug?(message: any, context?: string): any {
+  debug?(message: unknown, context?: string): void {
     console.debug(`[DEBUG] ${context ?? ''}`, message);
   }
 
-  verbose?(message: any, context?: string): any {
+  verbose?(message: unknown, context?: string): void {
     console.info(`[VERBOSE] ${context ?? ''}`, message);
   }
 }

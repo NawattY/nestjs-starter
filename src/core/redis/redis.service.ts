@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { createClient, RedisClientType } from 'redis';
+import { RedisConfig } from '@app/config/redis.config';
 import { CoreConfigService } from '@app/core/config/config.service';
 import { LoggerService } from '@app/core/logger/services/logger.service';
-import { RedisConfig } from '@app/config/redis.config';
+import { Injectable } from '@nestjs/common';
+import { createClient, RedisClientType } from 'redis';
 
 @Injectable()
 export class RedisService {
   private client: RedisClientType | null = null;
-  private enabled = false;
+  private readonly enabled: boolean;
 
   constructor(
     private readonly config: CoreConfigService,
@@ -17,7 +17,11 @@ export class RedisService {
     this.enabled = redis.enabled;
   }
 
-  private async getClient() {
+  private static getErrorStack(error: unknown): string | undefined {
+    return error instanceof Error ? error.stack : undefined;
+  }
+
+  private async getClient(): Promise<RedisClientType | null> {
     if (!this.enabled) return null;
 
     if (!this.client) {
@@ -33,18 +37,18 @@ export class RedisService {
 
       this.client.on('error', (err) => {
         this.logger.error(
-          `[Redis] Connection Error`,
-          err?.stack,
+          '[Redis] Connection Error',
+          RedisService.getErrorStack(err),
           'RedisService',
         );
       });
 
       try {
         await this.client.connect();
-      } catch (err: any) {
+      } catch (err: unknown) {
         this.logger.error(
           '[Redis] Failed to connect',
-          err?.stack,
+          RedisService.getErrorStack(err),
           'RedisService',
         );
         throw err;
@@ -60,7 +64,7 @@ export class RedisService {
     return client.get(key);
   }
 
-  async set(key: string, value: string, ttl?: number) {
+  async set(key: string, value: string, ttl?: number): Promise<void> {
     const client = await this.getClient();
     if (!client) return;
 
@@ -70,25 +74,25 @@ export class RedisService {
       } else {
         await client.set(key, value);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       this.logger.error(
         `[Redis] Failed to set key "${key}"`,
-        err?.stack,
+        RedisService.getErrorStack(err),
         'RedisService',
       );
     }
   }
 
-  async del(key: string) {
+  async del(key: string): Promise<number | void> {
     const client = await this.getClient();
     if (!client) return;
 
     try {
-      return client.del(key);
-    } catch (err: any) {
+      return await client.del(key);
+    } catch (err: unknown) {
       this.logger.error(
         `[Redis] Failed to delete key "${key}"`,
-        err?.stack,
+        RedisService.getErrorStack(err),
         'RedisService',
       );
     }

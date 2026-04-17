@@ -1,10 +1,5 @@
 export class LoginInput {
-  constructor(input: {
-    mobile: string;
-    password: string;
-    ip: string;
-    userAgent: string;
-  }) {
+  constructor(input: { mobile: string; password: string; ip: string; userAgent: string }) {
     this.mobile = input.mobile;
     this.password = input.password;
     this.ip = input.ip;

@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { CacheAdapter } from './interfaces/cache.interface';
 import { RedisService } from '@app/core/redis/redis.service';
+import { Injectable } from '@nestjs/common';
+
+import { CacheAdapter } from './interfaces/cache.interface';
 
 @Injectable()
 export class RedisCacheAdapter implements CacheAdapter {
@@ -8,7 +9,7 @@ export class RedisCacheAdapter implements CacheAdapter {
 
   async get<T>(key: string): Promise<T | null> {
     const data = await this.redis.get(key);
-    return data ? JSON.parse(data) : null;
+    return data ? (JSON.parse(data) as T) : null;
   }
 
   async set<T>(key: string, value: T, ttl?: number) {

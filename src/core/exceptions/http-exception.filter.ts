@@ -1,12 +1,6 @@
 import { ERROR_CODE } from '@app/constants/error-code.constant';
 import { ERROR_MESSAGE } from '@app/constants/error-message.constant';
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { get, toInteger, toString } from 'lodash';
 
@@ -26,32 +20,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const res = exception.getResponse();
       status = exception.getStatus();
 
-      if (
-        typeof res === 'object' &&
-        res !== null &&
-        'errorCode' in res &&
-        'errorMessage' in res
-      ) {
+      if (typeof res === 'object' && res !== null && 'errorCode' in res && 'errorMessage' in res) {
         // เป็น AppException ที่เราสร้างเอง
         errorCode = toInteger(res.errorCode);
         errorMessage = toString(res.errorMessage);
         errors = get(res, 'errors') ?? [];
-      } else if (
-        typeof res === 'object' &&
-        'message' in res &&
-        Array.isArray(res.message)
-      ) {
+      } else if (typeof res === 'object' && 'message' in res && Array.isArray(res.message)) {
         // ⚠️ ValidationPipe error format
         status = HttpStatus.BAD_REQUEST;
         errorCode = ERROR_CODE.VALIDATE_ERROR;
-        errorMessage =
-          ERROR_MESSAGE[ERROR_CODE.VALIDATE_ERROR] ?? 'VALIDATE ERROR';
+        errorMessage = ERROR_MESSAGE[ERROR_CODE.VALIDATE_ERROR] ?? 'VALIDATE ERROR';
         errors = res.message;
       } else if (typeof res === 'string') {
         errorMessage = res;
       } else {
-        errorMessage =
-          get(res, 'error') ?? get(res, 'message') ?? 'HTTP_EXCEPTION_ERROR';
+        errorMessage = get(res, 'error') ?? get(res, 'message') ?? 'HTTP_EXCEPTION_ERROR';
         const message = get(res, 'message');
         if (typeof message === 'string') {
           errors = [message];
@@ -73,10 +56,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       },
       path: request.url,
       timestamp: new Date().toISOString(),
-      stack:
-        process.env.NODE_ENV !== 'production'
-          ? get(exception, 'stack')
-          : undefined,
+      stack: process.env.NODE_ENV !== 'production' ? get(exception, 'stack') : undefined,
     });
   }
 
