@@ -1,8 +1,9 @@
+import { Expose } from 'class-transformer';
+
 import {
   PaginatedResultLinkInterface,
   PaginatedResultMetaInterface,
-} from '@app/shared/interfaces/paginated-result.interface';
-import { Expose } from 'class-transformer';
+} from '../interfaces/paginated-result.interface';
 
 export abstract class PaginateResponseDto<T> {
   abstract items: T[];

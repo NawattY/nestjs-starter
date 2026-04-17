@@ -1,12 +1,13 @@
+import { registerAs } from '@nestjs/config';
+import { z } from 'zod';
+
 import {
   envBooleanSchema,
   envIntegerSchema,
   envStringSchema,
   optionalEnvStringSchema,
   validateAndTransformConfig,
-} from '@app/core/config/utils/validate-config.util';
-import { registerAs } from '@nestjs/config';
-import { z } from 'zod';
+} from '../core/config/utils/validate-config.util';
 
 const redisConfigSchema = z.object({
   REDIS_HOST: envStringSchema('localhost'),

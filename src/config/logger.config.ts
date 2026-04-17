@@ -1,10 +1,11 @@
+import { registerAs } from '@nestjs/config';
+import { z } from 'zod';
+
 import {
   envBooleanSchema,
   envStringSchema,
   validateAndTransformConfig,
-} from '@app/core/config/utils/validate-config.util';
-import { registerAs } from '@nestjs/config';
-import { z } from 'zod';
+} from '../core/config/utils/validate-config.util';
 
 const loggerConfigSchema = z.object({
   LOG_LEVEL: envStringSchema('debug'),

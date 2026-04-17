@@ -1,4 +1,4 @@
-import type { PaginatedResultInterface } from '@app/shared/interfaces/paginated-result.interface';
+import type { PaginatedResultInterface } from '../interfaces/paginated-result.interface';
 
 interface PrismaPaginateOptions<
   Item,

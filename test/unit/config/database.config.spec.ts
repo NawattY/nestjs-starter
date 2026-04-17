@@ -1,4 +1,4 @@
-import { databaseConfiguration } from '@app/config/database.config';
+import { databaseConfiguration } from '../../../src/config/database.config';
 
 describe('databaseConfiguration', () => {
   const originalEnvironment = { ...process.env };

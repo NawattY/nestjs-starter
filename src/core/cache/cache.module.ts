@@ -1,8 +1,8 @@
-import { CoreConfigService } from '@app/core/config/config.service';
-import { RedisModule } from '@app/core/redis/redis.module';
-import { RedisService } from '@app/core/redis/redis.service';
 import { Global, Module } from '@nestjs/common';
 
+import { CoreConfigService } from '../config/config.service';
+import { RedisModule } from '../redis/redis.module';
+import { RedisService } from '../redis/redis.service';
 import { CacheService } from './cache.service';
 import { MemoryCacheAdapter } from './memory-cache.adapter';
 import { RedisCacheAdapter } from './redis-cache.adapter';

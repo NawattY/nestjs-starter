@@ -1,3 +1,3 @@
-import { PaginateQueryDto } from '@app/shared/dto/paginate-query.dto';
+import { PaginateQueryDto } from '../../../../../shared/dto/paginate-query.dto';
 
 export class FindUsersQueryDto extends PaginateQueryDto {}

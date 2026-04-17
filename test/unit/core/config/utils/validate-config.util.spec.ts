@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import {
   envBooleanSchema,
   envIntegerSchema,
@@ -5,8 +7,7 @@ import {
   envStringSchema,
   optionalEnvStringSchema,
   validateAndTransformConfig,
-} from '@app/core/config/utils/validate-config.util';
-import { z } from 'zod';
+} from '../../../../../src/core/config/utils/validate-config.util';
 
 describe('validate-config util', () => {
   describe('envBooleanSchema', () => {

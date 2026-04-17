@@ -1,19 +1,28 @@
-import { prismaPaginate } from '@app/shared/helpers/prisma-paginate.helper';
-import { PaginatedResultInterface } from '@app/shared/interfaces/paginated-result.interface';
 import { Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, User } from '@prisma/client';
 
+import { PrismaService } from '../../../../core/database/prisma.service';
+import { prismaPaginate } from '../../../../shared/helpers/prisma-paginate.helper';
+import { PaginatedResultInterface } from '../../../../shared/interfaces/paginated-result.interface';
 import { FindUsersInput } from '../../application/models/inputs/find-users.input';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { UserDatasourceInterface } from './user.datasource.interface';
 
 @Injectable()
 export class UserPrismaDataSource implements UserDatasourceInterface {
-  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {}
+  constructor(
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+    private readonly prismaService: PrismaService,
+  ) {}
+
+  private async ensureDatabaseConnection(): Promise<void> {
+    await this.prismaService.ensureConnection();
+  }
 
   async findAll(input: FindUsersInput): Promise<PaginatedResultInterface<UserEntity>> {
+    await this.ensureDatabaseConnection();
     return prismaPaginate<
       User,
       UserEntity,
@@ -36,6 +45,7 @@ export class UserPrismaDataSource implements UserDatasourceInterface {
   }
 
   async findById(id: string): Promise<UserEntity | null> {
+    await this.ensureDatabaseConnection();
     const user = await this.txHost.tx.user.findUnique({ where: { id } });
 
     return user ? this.transformUserEntity(user) : null;
@@ -45,6 +55,7 @@ export class UserPrismaDataSource implements UserDatasourceInterface {
     id: string,
     data: { email?: string; firstName?: string; lastName?: string },
   ): Promise<UserEntity> {
+    await this.ensureDatabaseConnection();
     const user = await this.txHost.tx.user.update({
       where: { id },
       data: {

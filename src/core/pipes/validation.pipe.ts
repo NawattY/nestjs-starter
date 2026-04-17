@@ -1,8 +1,9 @@
-import { ERROR_CODE } from '@app/constants/error-code.constant';
-import { ERROR_MESSAGE } from '@app/constants/error-message.constant';
 import type { ValidationPipeOptions } from '@nestjs/common';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import type { ValidationError } from 'class-validator';
+
+import { ERROR_CODE } from '../../constants/error-code.constant';
+import { ERROR_MESSAGE } from '../../constants/error-message.constant';
 
 export function createValidationPipe(options?: ValidationPipeOptions) {
   return new ValidationPipe({

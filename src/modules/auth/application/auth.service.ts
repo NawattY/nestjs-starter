@@ -1,9 +1,9 @@
-import { JwtService } from '@app/core/auth/jwt.service';
-import type { BaseJwtPayload } from '@app/core/auth/jwt-base-payload.interface';
-import { JwtPayload } from '@app/core/auth/jwt-payload.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 
+import { JwtService } from '../../../core/auth/jwt.service';
+import type { BaseJwtPayload } from '../../../core/auth/jwt-base-payload.interface';
+import { JwtPayload } from '../../../core/auth/jwt-payload.interface';
 import { UserAuthEntity } from '../domain/entities/user-auth.entity';
 import { AuthException } from '../exceptions/auth.exception';
 import {

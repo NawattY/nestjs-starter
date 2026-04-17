@@ -105,16 +105,15 @@ it('should return user balance', async () => {
 Imports must be organized in the following order, separated by blank lines:
 
 1. **External packages** (node_modules)
-2. **Internal aliases** (@app/*)
-3. **Relative imports** (./, ../)
+2. **Internal relative imports** (./, ../)
 
 ```typescript
 // ✅ CORRECT
 import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '@prisma/client';
 
-import { UserDatasource, USER_DATASOURCE } from '@app/modules/user/infrastructure/datasources';
-import { UserException } from '@app/modules/user/exceptions';
+import { UserDatasource, USER_DATASOURCE } from '../infrastructure/datasources/user.datasource.interface';
+import { UserException } from '../exceptions/user.exception';
 
 import { CreateUserInput } from './models/inputs/create-user.input';
 import { UserOutput } from './models/outputs/user.output';
@@ -122,7 +121,7 @@ import { UserOutput } from './models/outputs/user.output';
 // ❌ WRONG (mixed order, no separation)
 import { CreateUserInput } from './models/inputs/create-user.input';
 import { Injectable } from '@nestjs/common';
-import { UserDatasource } from '@app/modules/user/infrastructure/datasources';
+import { UserDatasource } from '../infrastructure/datasources/user.datasource.interface';
 ```
 
 ### Import Rules
@@ -255,8 +254,8 @@ export const ERROR_MESSAGE = {
 ```typescript
 // modules/user/exceptions/user.exception.ts
 import { HttpStatus } from '@nestjs/common';
-import { ERROR_CODE } from '@app/constants/error-code.constant';
-import { AppException } from '@app/shared/exceptions/app.exception';
+import { ERROR_CODE } from '../../constants/error-code.constant';
+import { AppException } from '../../shared/exceptions/app.exception';
 
 export class UserException {
   static notFound(): never {

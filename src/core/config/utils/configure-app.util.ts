@@ -1,8 +1,9 @@
-import { setupApiDocs } from '@app/core/api-docs/api-docs.setup';
-import { createValidationPipe } from '@app/core/pipes';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import compression from 'compression';
 import helmet from 'helmet';
+
+import { setupApiDocs } from '../../api-docs/api-docs.setup';
+import { createValidationPipe } from '../../pipes';
 
 const ALLOWED_CORS_ORIGINS = new Set(['http://localhost:3000', 'https://api.yourdomain.com']);
 

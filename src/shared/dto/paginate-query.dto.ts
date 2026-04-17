@@ -1,8 +1,9 @@
-import { DEFAULT_PAGINATION } from '@app/constants/pagination.constant';
-import { PaginatedRequestInterface } from '@app/shared/interfaces/paginated-request.interface';
 import { Transform } from 'class-transformer';
 import { IsNumber, IsOptional } from 'class-validator';
 import { toInteger } from 'lodash';
+
+import { DEFAULT_PAGINATION } from '../../constants/pagination.constant';
+import { PaginatedRequestInterface } from '../interfaces/paginated-request.interface';
 
 export class PaginateQueryDto implements PaginatedRequestInterface {
   @IsOptional()

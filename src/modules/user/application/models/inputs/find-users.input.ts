@@ -1,4 +1,4 @@
-import { PaginateInput } from '@app/shared/models/paginate.input';
+import { PaginateInput } from '../../../../../shared/models/paginate.input';
 
 export class FindUsersInput extends PaginateInput {
   constructor(input: { page?: number; perPage?: number }) {

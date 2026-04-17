@@ -1,8 +1,8 @@
-import { JwtPayload } from '@app/core/auth/jwt-payload.interface';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
+import { JwtPayload } from '../../../core/auth/jwt-payload.interface';
 import { ROLES_KEY } from './roles.decorator';
 
 type AuthenticatedRequest = Request & {

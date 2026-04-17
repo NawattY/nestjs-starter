@@ -1,12 +1,13 @@
-import { JwtAuthGuard } from '@app/core/auth/jwt-auth.guard';
-import type { JwtPayload } from '@app/core/auth/jwt-payload.interface';
-import { AuthController } from '@app/modules/auth/api/controllers/auth.controller';
-import { AuthService } from '@app/modules/auth/application/auth.service';
-import { ROUTES } from '@app/routes/app-routes.constant';
 import type { ExecutionContext, INestApplication } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+
+import { JwtAuthGuard } from '../src/core/auth/jwt-auth.guard';
+import type { JwtPayload } from '../src/core/auth/jwt-payload.interface';
+import { AuthController } from '../src/modules/auth/api/controllers/auth.controller';
+import { AuthService } from '../src/modules/auth/application/auth.service';
+import { ROUTES } from '../src/routes/app-routes.constant';
 
 function getHttpServer(app: INestApplication): Parameters<typeof request>[0] {
   return app.getHttpServer() as unknown as Parameters<typeof request>[0];

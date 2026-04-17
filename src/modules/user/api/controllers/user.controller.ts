@@ -1,13 +1,13 @@
-import { JwtAuthGuard } from '@app/core/auth/jwt-auth.guard';
-import { JwtPayload } from '@app/core/auth/jwt-payload.interface';
-import { FindUsersInput } from '@app/modules/user/application/models/inputs/find-users.input';
-import { UpdateUserInput } from '@app/modules/user/application/models/inputs/update-user.input';
-import { UserService } from '@app/modules/user/application/user.service';
-import { ROUTES } from '@app/routes/app-routes.constant';
-import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
 import { Body, Controller, Get, Patch, Query, UseGuards } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 
+import { JwtAuthGuard } from '../../../../core/auth/jwt-auth.guard';
+import { JwtPayload } from '../../../../core/auth/jwt-payload.interface';
+import { ROUTES } from '../../../../routes/app-routes.constant';
+import { CurrentUser } from '../../../../shared/decorators/current-user.decorator';
+import { FindUsersInput } from '../../application/models/inputs/find-users.input';
+import { UpdateUserInput } from '../../application/models/inputs/update-user.input';
+import { UserService } from '../../application/user.service';
 import { FindUsersQueryDto } from '../dtos/requests/find-users-query.dto';
 import { UpdateUserRequestDto } from '../dtos/requests/update-user-request.dto';
 import { UserListResponseDto } from '../dtos/responses/user-list-response.dto';

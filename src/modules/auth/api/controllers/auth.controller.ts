@@ -1,14 +1,14 @@
-import { AuthUser } from '@app/core/auth/auth-user.decorator';
-import { JwtAuthGuard } from '@app/core/auth/jwt-auth.guard';
-import { JwtPayload } from '@app/core/auth/jwt-payload.interface';
-import { AuthService } from '@app/modules/auth/application/auth.service';
-import { LoginInput } from '@app/modules/auth/application/models/inputs/login.input';
-import { RefreshTokenInput } from '@app/modules/auth/application/models/inputs/refresh-token.input';
-import { ROUTES } from '@app/routes/app-routes.constant';
 import { Body, Controller, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { Request } from 'express';
 
+import { AuthUser } from '../../../../core/auth/auth-user.decorator';
+import { JwtAuthGuard } from '../../../../core/auth/jwt-auth.guard';
+import { JwtPayload } from '../../../../core/auth/jwt-payload.interface';
+import { ROUTES } from '../../../../routes/app-routes.constant';
+import { AuthService } from '../../application/auth.service';
+import { LoginInput } from '../../application/models/inputs/login.input';
+import { RefreshTokenInput } from '../../application/models/inputs/refresh-token.input';
 import { LoginRequestDto } from '../dtos/requests/login-request.dto';
 import { RefreshRequestDto } from '../dtos/requests/refresh-request.dto';
 import { AuthResponseDto } from '../dtos/responses/auth-response.dto';

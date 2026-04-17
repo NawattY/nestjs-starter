@@ -1,6 +1,7 @@
-import type { LoggerConfig } from '@app/config/logger.config';
-import { CoreConfigService } from '@app/core/config/config.service';
 import { Injectable, LoggerService as NestLoggerService } from '@nestjs/common';
+
+import type { LoggerConfig } from '../../../config/logger.config';
+import { CoreConfigService } from '../../config/config.service';
 
 type LogMeta = Record<string, unknown>;
 

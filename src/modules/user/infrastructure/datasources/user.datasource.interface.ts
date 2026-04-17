@@ -1,5 +1,4 @@
-import type { PaginatedResultInterface } from '@app/shared/interfaces/paginated-result.interface';
-
+import type { PaginatedResultInterface } from '../../../../shared/interfaces/paginated-result.interface';
 import type { FindUsersInput } from '../../application/models/inputs/find-users.input';
 import type { UserEntity } from '../../domain/entities/user.entity';
 

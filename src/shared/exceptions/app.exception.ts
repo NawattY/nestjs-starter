@@ -1,5 +1,6 @@
-import { ERROR_MESSAGE } from '@app/constants/error-message.constant';
 import { HttpException, HttpStatus } from '@nestjs/common';
+
+import { ERROR_MESSAGE } from '../../constants/error-message.constant';
 
 interface AppExceptionOptions {
   errorCode: number;

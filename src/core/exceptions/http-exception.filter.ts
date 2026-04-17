@@ -1,8 +1,9 @@
-import { ERROR_CODE } from '@app/constants/error-code.constant';
-import { ERROR_MESSAGE } from '@app/constants/error-message.constant';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { get, toInteger, toString } from 'lodash';
+
+import { ERROR_CODE } from '../../constants/error-code.constant';
+import { ERROR_MESSAGE } from '../../constants/error-message.constant';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {

@@ -1,10 +1,11 @@
+import { registerAs } from '@nestjs/config';
+import { z } from 'zod';
+
 import {
   envBooleanSchema,
   optionalEnvStringSchema,
   validateAndTransformConfig,
-} from '@app/core/config/utils/validate-config.util';
-import { registerAs } from '@nestjs/config';
-import { z } from 'zod';
+} from '../core/config/utils/validate-config.util';
 
 const databaseConfigSchema = z.object({
   DATABASE_URL: optionalEnvStringSchema,

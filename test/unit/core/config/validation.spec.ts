@@ -1,4 +1,4 @@
-import { validateCoreConfig } from '@app/core/config/validation';
+import { validateCoreConfig } from '../../../../src/core/config/validation';
 
 describe('validateCoreConfig', () => {
   it('should apply defaults and coerce APP_PORT', () => {

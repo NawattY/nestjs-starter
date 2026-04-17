@@ -11,7 +11,7 @@ This plan is intentionally split into phases so the migration can be executed ac
 
 ## Locked Decisions
 
-1. Canonical alias is `@app/*`.
+1. Internal imports should prefer relative paths over project-wide aliases.
 2. Route versioning must live in `src/routes/app-routes.constant.ts`.
 3. Nest URI versioning in `main.ts` should be removed as route constants are adopted.
 4. Temporary compatibility for legacy `#...` imports is allowed only during migration phases.
@@ -20,8 +20,8 @@ This plan is intentionally split into phases so the migration can be executed ac
 
 ### Completed in current round
 
-1. Added `@app/*` path mapping in project configuration.
-2. Migrated `src` and `test` imports from `#...` to `@app/*`.
+1. Added a temporary `@app/*` path mapping in project configuration during the migration away from legacy `#...` imports.
+2. Migrated `src` and `test` imports from `#...` to `@app/*` as an intermediate stabilization step.
 3. Removed legacy `#...` alias mappings from project configuration.
 4. Added `src/routes/app-routes.constant.ts` for current `auth` and `user` v1 endpoints.
 5. Removed Nest URI versioning from `src/main.ts`.
@@ -38,11 +38,11 @@ This plan is intentionally split into phases so the migration can be executed ac
 16. Made controller-to-application boundaries explicit by constructing input models in `auth` and `user` controllers.
 17. Added `nestjs-cls` transactional wiring and migrated `auth` and `user` datasources from `PrismaService` to `TransactionHost<TransactionalAdapterPrisma>`.
 18. Moved the remaining `UserModificationRule` out of `src/business` and into `src/modules/user/application/rules`, with a module-local user exception.
-19. Aligned `test/jest-e2e.json` to `@swc/jest` and `@app/*`.
+19. Aligned `test/jest-e2e.json` to `@swc/jest` during the alias transition phase.
 20. Added `test/jest-unit.json` and the `test:unit` npm script for unit specs under `test/unit`.
 21. Fixed strict-mode DTO test assertions and cleaned up `test/tsconfig.json` diagnostics.
 22. Enabled SWC decorator support across all Jest entrypoints used by the repo.
-23. Updated AI guidance docs to reflect `@app/*` as the canonical alias.
+23. Updated AI guidance docs during the alias transition phase.
 24. Updated `.dependency-cruiser.js` to remove `src/business` assumptions and match the `application/domain/infrastructure` folder layout.
 25. Re-validated the migrated auth/user slice with build, e2e, and unit test runs.
 26. Re-ran dependency-cruiser and confirmed no architecture rule violations in the current `src` graph.
@@ -77,6 +77,7 @@ This plan is intentionally split into phases so the migration can be executed ac
 55. Removed remaining Swagger code-first response artifacts and decorators from `src`, removed obsolete Swagger dependencies, and tightened Spectral rules to require request/response examples in the OpenAPI contract.
 56. Renamed the runtime API docs bootstrap away from Swagger-specific naming and tightened Spectral further by requiring schema-level examples for `components.schemas`.
 57. Tightened Spectral to require standard error responses so operations with validated input declare `400` and secured operations declare `401` in the OpenAPI contract.
+58. Removed the temporary `@app/*` alias, migrated source and test imports to relative paths, and simplified TS/Jest configuration accordingly.
 
 ### Remaining follow-up
 
@@ -85,12 +86,12 @@ This plan is intentionally split into phases so the migration can be executed ac
 
 ## Verified Current State
 
-1. Canonical alias is `@app/*` across source, tests, and repo guidance.
+1. Source and test code now use relative imports instead of a project-wide `@app/*` alias.
 2. Route versioning lives in `src/routes/app-routes.constant.ts` and `src/main.ts` no longer enables Nest URI versioning.
 3. `src/modules` currently contains only `auth` and `user`, and both use `api`, `application`, `domain`, and `infrastructure` folders.
 4. No standalone `src/business` layer remains in the runtime code.
 5. Auth and user datasources use `TransactionHost<TransactionalAdapterPrisma>` instead of direct `PrismaService` injection.
-6. Jest config for e2e and unit tests is aligned to `@swc/jest`, `@app/*`, and Nest decorator metadata.
+6. Jest config for e2e and unit tests is aligned to `@swc/jest` and Nest decorator metadata without alias-specific mapping.
 7. Reusable Swagger response helpers now live under `src/core/swagger`.
 8. Shared JWT payload typing now lives under `src/core/auth` instead of the `auth` feature module.
 9. `AppModule` imports feature modules directly, without any top-level `src/api` module layer remaining.

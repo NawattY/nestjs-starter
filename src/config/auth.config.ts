@@ -1,11 +1,12 @@
+import { registerAs } from '@nestjs/config';
+import type { StringValue as MsStringValue } from 'ms';
+import { z } from 'zod';
+
 import {
   envMsDurationSchema,
   requiredEnvStringSchema,
   validateAndTransformConfig,
-} from '@app/core/config/utils/validate-config.util';
-import { registerAs } from '@nestjs/config';
-import type { StringValue as MsStringValue } from 'ms';
-import { z } from 'zod';
+} from '../core/config/utils/validate-config.util';
 
 const authConfigSchema = z.object({
   JWT_ACCESS_SECRET: requiredEnvStringSchema,

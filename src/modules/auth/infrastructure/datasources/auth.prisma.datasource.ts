@@ -3,13 +3,21 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import type { User, UserSession } from '@prisma/client';
 
+import { PrismaService } from '../../../../core/database/prisma.service';
 import { SessionEntity } from '../../domain/entities/session.entity';
 import { UserAuthEntity } from '../../domain/entities/user-auth.entity';
 import { AuthDataSource } from './auth.datasource.interface';
 
 @Injectable()
 export class AuthPrismaDataSource implements AuthDataSource {
-  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {}
+  constructor(
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+    private readonly prismaService: PrismaService,
+  ) {}
+
+  private async ensureDatabaseConnection(): Promise<void> {
+    await this.prismaService.ensureConnection();
+  }
 
   private toUserEntity(user: User): UserAuthEntity {
     return new UserAuthEntity(
@@ -37,16 +45,19 @@ export class AuthPrismaDataSource implements AuthDataSource {
   }
 
   async findUserById(id: string) {
+    await this.ensureDatabaseConnection();
     const user = await this.txHost.tx.user.findUnique({ where: { id } });
     return user ? this.toUserEntity(user) : null;
   }
 
   async findUserByMobile(mobile: string) {
+    await this.ensureDatabaseConnection();
     const user = await this.txHost.tx.user.findUnique({ where: { mobile } });
     return user ? this.toUserEntity(user) : null;
   }
 
   async createSession(userId: string, hash: string, sessionId: string, ua?: string, ip?: string) {
+    await this.ensureDatabaseConnection();
     const session = await this.txHost.tx.userSession.create({
       data: {
         id: sessionId,
@@ -62,11 +73,13 @@ export class AuthPrismaDataSource implements AuthDataSource {
   }
 
   async findSession(id: string) {
+    await this.ensureDatabaseConnection();
     const session = await this.txHost.tx.userSession.findUnique({ where: { id } });
     return session ? this.toSessionEntity(session) : null;
   }
 
   async replaceSession(oldId: string, newSession: SessionEntity) {
+    await this.ensureDatabaseConnection();
     await this.txHost.withTransaction(async () => {
       await this.txHost.tx.userSession.update({
         where: { id: oldId },
@@ -87,6 +100,7 @@ export class AuthPrismaDataSource implements AuthDataSource {
   }
 
   async revokeSession(id: string) {
+    await this.ensureDatabaseConnection();
     await this.txHost.tx.userSession.update({
       where: { id },
       data: { revokedAt: new Date() },

@@ -4,6 +4,8 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 
+import { AppModule } from '../src/app.module';
+
 describe.skip('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -13,7 +15,6 @@ describe.skip('AppController (e2e)', () => {
     process.env.DB_PASSWORD = 'b';
     process.env.JWT_ACCESS_SECRET = 'secret';
     process.env.JWT_REFRESH_SECRET = 'secret';
-    const { AppModule } = await import('./../src/app.module');
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();

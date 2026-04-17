@@ -1,9 +1,9 @@
-import { AuthConfig } from '@app/config/auth.config';
-import { CoreConfigService } from '@app/core/config/config.service';
 import { Injectable } from '@nestjs/common';
 import type { SignOptions } from 'jsonwebtoken';
 import * as jwt from 'jsonwebtoken';
 
+import { AuthConfig } from '../../config/auth.config';
+import { CoreConfigService } from '../config/config.service';
 import { BaseJwtPayload } from './jwt-base-payload.interface';
 
 @Injectable()

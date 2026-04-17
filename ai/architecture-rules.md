@@ -104,17 +104,15 @@ src/
 | **Polyrepo** | `src/database/prisma/` | `import { PrismaClient } from '@prisma/client'` |
 | **Monorepo** | `packages/database/prisma/` | `import { PrismaClient } from '@repo/database'` |
 
-### Path Aliases (tsconfig.json)
+### TypeScript Path Resolution
 ```json
 {
-  "baseUrl": "./",
-  "paths": {
-    "@app/*": ["src/*"]
-  }
+  "rootDir": "./src",
+  "outDir": "./dist"
 }
 ```
 
-**Monorepo เพิ่มเติม:** `"@repo/database"`, `"@repo/shared"`
+**Monorepo เพิ่มเติม:** ใช้ package import จริง เช่น `@repo/database`, `@repo/shared`
 
 ---
 
@@ -272,7 +270,7 @@ export const ROUTES = {
 **Rule:** NEVER hardcode path strings in Controllers. Always import from `ROUTES`.
 
 ```typescript
-import { ROUTES } from '@app/routes/app-routes.constant';
+import { ROUTES } from '../../routes/app-routes.constant';
 
 @Controller(ROUTES.V1.COLLECTION.ROOT)
 export class CollectionController {
@@ -426,7 +424,7 @@ export const ERROR_MESSAGE: Record<number, string> = {
 ### Base Exception Class
 ```typescript
 // shared/exceptions/app.exception.ts
-import { ERROR_MESSAGE } from '@app/constants/error-message.constant';
+import { ERROR_MESSAGE } from '../../constants/error-message.constant';
 import { HttpException, HttpStatus } from '@nestjs/common';
 
 interface AppExceptionOptions {
@@ -462,8 +460,8 @@ export class AppException extends HttpException {
 ### Module-Specific Exception Factory
 ```typescript
 // modules/collection/exceptions/collection.exception.ts
-import { ERROR_CODE } from '@app/constants/error-code.constant';
-import { AppException } from '@app/shared/exceptions/app.exception';
+import { ERROR_CODE } from '../../constants/error-code.constant';
+import { AppException } from '../../shared/exceptions/app.exception';
 import { HttpStatus } from '@nestjs/common';
 
 export class CollectionException {
@@ -747,7 +745,7 @@ Before generating code:
 - [ ] **Types:** Passing DTOs to Service? → Use Input Model
 - [ ] **Return:** Returning Prisma object? → Map to Output Model
 - [ ] **OpenAPI:** Updated `openapi/openapi.yaml` for contract changes?
-- [ ] **Path Alias:** Using `@app/*` consistently?
+- [ ] **Import Paths:** Using relative imports consistently and avoiding unnecessary alias layers?
 
 ---
 

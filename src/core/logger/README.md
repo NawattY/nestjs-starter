@@ -4,7 +4,7 @@ Global Logger ที่สามารถเชื่อมต่อ CloudWatch,
 ใช้ `LoggerService` แทน `console.log()` หรือ `Logger` ปกติใน NestJS
 
 ```ts
-import { LoggerService } from '@app/core/logger/services/logger.service';
+import { LoggerService } from './services/logger.service';
 
 constructor(private readonly logger: LoggerService) {}
 

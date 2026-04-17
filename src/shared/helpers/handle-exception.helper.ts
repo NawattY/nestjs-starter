@@ -1,5 +1,6 @@
-import { AppException } from '@app/shared/exceptions/app.exception';
 import { HttpStatus } from '@nestjs/common';
+
+import { AppException } from '../exceptions/app.exception';
 
 export function handleException(
   err: unknown,

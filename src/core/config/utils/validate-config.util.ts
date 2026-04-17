@@ -1,8 +1,6 @@
 import type { StringValue as MsStringValue } from 'ms';
+import ms from 'ms';
 import { z, ZodError } from 'zod';
-
-const MS_DURATION_PATTERN =
-  /^-?(?:\d+)?\.?\d+(?:\s*(?:years?|yrs?|y|weeks?|w|days?|d|hours?|hrs?|h|minutes?|mins?|m|seconds?|secs?|s|milliseconds?|msecs?|ms))?$/i;
 
 function emptyStringToUndefined(value: unknown): unknown {
   if (typeof value === 'string' && value.trim() === '') {
@@ -48,10 +46,14 @@ export function envMsDurationSchema(defaultValue: MsStringValue) {
     .string()
     .trim()
     .default(defaultValue)
-    .refine(
-      (value) => MS_DURATION_PATTERN.test(value),
-      'Must be a valid ms duration string (for example "1h" or "30d")',
-    )
+    .refine((value) => {
+      try {
+        const milliseconds = ms(value as MsStringValue);
+        return typeof milliseconds === 'number' && !Number.isNaN(milliseconds);
+      } catch {
+        return false;
+      }
+    }, 'Must be a valid ms duration string (for example "1h" or "30d")')
     .transform((value) => value as MsStringValue);
 }
 

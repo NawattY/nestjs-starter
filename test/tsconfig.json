@@ -2,13 +2,8 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "rootDir": "..",
-    "baseUrl": "..",
     "types": ["node", "jest"],
-    "noEmit": true,
-    "ignoreDeprecations": "6.0",
-    "paths": {
-      "@app/*": ["src/*"]
-    }
+    "noEmit": true
   },
   "include": ["./**/*.ts"]
 }

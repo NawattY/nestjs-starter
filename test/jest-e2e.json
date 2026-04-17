@@ -23,8 +23,5 @@
         }
       }
     ]
-  },
-  "moduleNameMapper": {
-    "^@app/(.*)$": "<rootDir>/../src/$1"
   }
 }
